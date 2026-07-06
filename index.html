@@ -1,87 +1,78 @@
-import os
-# Configurazione proxy globale prima di caricare qualsiasi altra cosa
-os.environ["http_proxy"] = "http://proxy.server:3128"
-os.environ["https_proxy"] = "http://proxy.server:3128"
-
-import requests
-from flask import Flask, send_from_directory, request, jsonify
-
-app = Flask(__name__)
-
-# =========================================================================
-# 🔐 CREDENZIALI POTA
-# =========================================================================
-POTA_USERNAME = "ik6lmb@libero.it"  
-POTA_PASSWORD = "Marilin1!"
-
-# =========================================================================
-# 📢 ROTTA: INVIO AUTO-SPOT SU POTA
-# =========================================================================
-@app.route("/api/spot", methods=["POST"])
-def post_spot():
-    data = request.json
-    
-    # 1. LOGIN SU POTA
-    login_url = "https://api.pota.app/auth/login"
-    login_payload = {
-        "username": POTA_USERNAME,
-        "password": POTA_PASSWORD
-    }
-    
-    try:
-        # Eseguiamo il login (il proxy viene ereditato automaticamente dal sistema)
-        login_response = requests.post(login_url, json=login_payload)
-        
-        if login_response.status_code != 200:
-            return jsonify({
-                "success": False, 
-                "message": f"Errore Login POTA: Controlla username/password. ({login_response.text})"
-            }), 401
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POTA Live Monitor</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; color: #333; }
+        .container { max-width: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin: 0 auto; }
+        h1 { text-align: center; color: #2c3e50; }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        input, textarea { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #3498db; color: white; border: none; border-radius: 4px; margin-top: 15px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #2980b9; }
+        #status { margin-top: 15px; text-align: center; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>POTA Auto-Spotter</h1>
+        <form id="spotForm">
+            <label for="activator">Attivatore (Callsign):</label>
+            <input type="text" id="activator" required placeholder="es. IK6LMB">
             
-        token_data = login_response.json()
-        pota_jwt_token = token_data.get("token") or token_data.get("accessToken", "")
-
-        if not pota_jwt_token:
-            return jsonify({"success": False, "message": "Impossibile recuperare il token di sessione."}), 500
-
-        # 2. INVIO DELLO SPOT
-        spot_url = "https://api.pota.app/spot"
-        pota_payload = {
-            "activator": data.get("activator", "").upper(),
-            "spotter": data.get("spotter", "").upper(),
-            "frequency": int(data.get("frequency", 0)),
-            "reference": data.get("reference", "").upper(),
-            "comments": data.get("comments", "")
-        }
-        
-        headers = {
-            "Authorization": f"Bearer {pota_jwt_token}",
-            "Content-Type": "application/json"
-        }
-        
-        response = requests.post(spot_url, json=pota_payload, headers=headers)
-        
-        if response.status_code in [200, 201]:
-            return jsonify({"success": True, "message": "Spot inviato con successo!"}), 200
-        else:
-            return jsonify({"success": False, "message": f"Errore server POTA: {response.text}"}), response.status_code
+            <label for="frequency">Frequenza (kHz):</label>
+            <input type="number" id="frequency" required placeholder="es. 7047">
             
-    except Exception as e:
-        return jsonify({"success": False, "message": f"Errore interno del server: {str(e)}"}), 500
+            <label for="reference">Referenza POTA:</label>
+            <input type="text" id="reference" required placeholder="es. K-1234">
+            
+            <label for="spotter">Spotter:</label>
+            <input type="text" id="spotter" required placeholder="es. IK6LMB">
+            
+            <label for="comments">Commenti:</label>
+            <textarea id="comments" placeholder="es. FT8 o CW"></textarea>
+            
+            <button type="submit">Invia Spot su POTA</button>
+        </form>
+        <div id="status"></div>
+    </div>
 
+    <script>
+        document.getElementById('spotForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = "Invio in corso...";
+            statusDiv.style.color = "blue";
 
-# =========================================================================
-# 🏠 HOME E ROTTE ORIGINALI
-# =========================================================================
+            const payload = {
+                activator: document.getElementById('activator').value,
+                frequency: parseInt(document.getElementById('frequency').value),
+                reference: document.getElementById('reference').value,
+                spotter: document.getElementById('spotter').value,
+                comments: document.getElementById('comments').value
+            };
 
-@app.route("/")
-def home():
-    return send_from_directory(".", "index.html")
-
-@app.route("/psk")
-def psk():
-    return send_from_directory(".", "psk.html")
-
-@app.route("/test")
-def test():
-    return "OK APP FUNZIONANTE"
+            try {
+                const response = await fetch('/api/spot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    statusDiv.innerText = "✓ Spot inviato con successo!";
+                    statusDiv.style.color = "green";
+                } else {
+                    statusDiv.innerText = "❌ Errore: " + result.message;
+                    statusDiv.style.color = "red";
+                }
+            } catch (err) {
+                statusDiv.innerText = "❌ Errore di connessione.";
+                statusDiv.style.color = "red";
+            }
+        });
+    </script>
+</body>
+</html>
