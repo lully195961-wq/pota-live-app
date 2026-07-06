@@ -3,49 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POTA Live Monitor</title>
+    <title>POTA Control Center</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; color: #333; }
-        .container { max-width: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin: 0 auto; }
-        h1 { text-align: center; color: #2c3e50; }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; color: #333; display: flex; flex-direction: column; align-items: center; }
+        .layout { display: flex; gap: 20px; max-width: 1200px; width: 100%; justify-content: center; flex-wrap: wrap; }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 320px; flex: 1; }
+        .spots-panel { flex: 2; min-width: 500px; }
+        h1, h2 { text-align: center; color: #2c3e50; margin-top: 0; }
         label { font-weight: bold; display: block; margin-top: 10px; }
-        input, textarea { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input, textarea, select { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button { width: 100%; padding: 10px; background-color: #3498db; color: white; border: none; border-radius: 4px; margin-top: 15px; font-size: 16px; cursor: pointer; }
         button:hover { background-color: #2980b9; }
-        #status { margin-top: 15px; text-align: center; font-weight: bold; }
+        .filters { display: flex; gap: 10px; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #3498db; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .badge { background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>POTA Auto-Spotter</h1>
-        <form id="spotForm">
-            <label for="activator">Attivatore (Callsign):</label>
-            <input type="text" id="activator" required placeholder="es. IK6LMB">
+
+    <div class="layout">
+        <div class="panel">
+            <h2>Invia Auto-Spot</h2>
+            <form id="spotForm">
+                <label for="activator">Attivatore:</label>
+                <input type="text" id="activator" required placeholder="es. IK6LMB">
+                <label for="frequency">Frequenza (kHz):</label>
+                <input type="number" id="frequency" required placeholder="es. 7047">
+                <label for="reference">Referenza POTA:</label>
+                <input type="text" id="reference" required placeholder="es. I-0123">
+                <label for="spotter">Spotter:</label>
+                <input type="text" id="spotter" required placeholder="es. IK6LMB">
+                <label for="comments">Commenti:</label>
+                <textarea id="comments" placeholder="es. FT8 o CW"></textarea>
+                <button type="submit">Invia Spot</button>
+            </form>
+            <div id="status" style="margin-top:10px; text-align:center; font-weight:bold;"></div>
+        </div>
+
+        <div class="panel spots-panel">
+            <h2>Attività POTA Live</h2>
             
-            <label for="frequency">Frequenza (kHz):</label>
-            <input type="number" id="frequency" required placeholder="es. 7047">
-            
-            <label for="reference">Referenza POTA:</label>
-            <input type="text" id="reference" required placeholder="es. K-1234">
-            
-            <label for="spotter">Spotter:</label>
-            <input type="text" id="spotter" required placeholder="es. IK6LMB">
-            
-            <label for="comments">Commenti:</label>
-            <textarea id="comments" placeholder="es. FT8 o CW"></textarea>
-            
-            <button type="submit">Invia Spot su POTA</button>
-        </form>
-        <div id="status"></div>
+            <div class="filters">
+                <select id="filterBand">
+                    <option value="ALL">Tutte le bande</option>
+                    <option value="40m">40 Metri</option>
+                    <option value="20m">20 Metri</option>
+                    <option value="15m">15 Metri</option>
+                    <option value="10m">10 Metri</option>
+                </select>
+                <select id="filterMode">
+                    <option value="ALL">Tutti i modi</option>
+                    <option value="FT8">FT8</option>
+                    <option value="CW">CW</option>
+                    <option value="SSB">SSB</option>
+                </select>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ora (UTC)</th>
+                            <th>Attivatore</th>
+                            <th>Frequenza</th>
+                            <th>Modo</th>
+                            <th>Referenza</th>
+                        </tr>
+                    </thead>
+                    <tbody id="spotsTableBody">
+                        <tr><td colspan="5" style="text-align:center;">Caricamento spot...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
+        // Gestione Invio Spot
         document.getElementById('spotForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const statusDiv = document.getElementById('status');
-            statusDiv.innerText = "Invio in corso...";
-            statusDiv.style.color = "blue";
-
+            statusDiv.innerText = "Invio..."; statusDiv.style.color = "blue";
             const payload = {
                 activator: document.getElementById('activator').value,
                 frequency: parseInt(document.getElementById('frequency').value),
@@ -53,26 +94,73 @@
                 spotter: document.getElementById('spotter').value,
                 comments: document.getElementById('comments').value
             };
-
             try {
-                const response = await fetch('/api/spot', {
+                const r = await fetch('/api/spot', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const result = await response.json();
-                if (result.success) {
-                    statusDiv.innerText = "✓ Spot inviato con successo!";
-                    statusDiv.style.color = "green";
-                } else {
-                    statusDiv.innerText = "❌ Errore: " + result.message;
-                    statusDiv.style.color = "red";
+                const res = await r.json();
+                if(res.success) { statusDiv.innerText = "✓ Spot Inviato!"; statusDiv.style.color = "green"; loadSpots(); }
+                else { statusDiv.innerText = "❌ Errore: " + res.message; statusDiv.style.color = "red"; }
+            } catch { statusDiv.innerText = "❌ Errore di connessione."; statusDiv.style.color = "red"; }
+        });
+
+        // Funzione per determinare la banda dalla frequenza in kHz
+        function getBand(freqStr) {
+            const freq = parseFloat(freqStr);
+            if (freq >= 7000 && freq <= 7300) return "40m";
+            if (freq >= 14000 && freq <= 14350) return "20m";
+            if (freq >= 21000 && freq <= 21450) return "15m";
+            if (freq >= 28000 && freq <= 29700) return "10m";
+            return "Altro";
+        }
+
+        // Caricamento e Filtraggio Spot Live
+        async function loadSpots() {
+            try {
+                const response = await fetch('/api/spots');
+                const spots = await response.json();
+                
+                const bandFilter = document.getElementById('filterBand').value;
+                const modeFilter = document.getElementById('filterMode').value;
+                const tbody = document.getElementById('spotsTableBody');
+                tbody.innerHTML = "";
+
+                spots.forEach(spot => {
+                    const freq = spot.frequency;
+                    const band = getBand(freq);
+                    const mode = (spot.mode || "Unknown").toUpperCase();
+                    
+                    // Applicazione filtri di selezione banda e modo
+                    if (bandFilter !== "ALL" && band !== bandFilter) return;
+                    if (modeFilter !== "ALL" && !mode.includes(modeFilter)) return;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${new Date(spot.spotTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                        <td><strong>${spot.activator}</strong></td>
+                        <td>${freq} kHz</td>
+                        <td><span class="badge">${mode}</span></td>
+                        <td>${spot.reference}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                if(tbody.innerHTML === "") {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nessuno spot corrispondente ai filtri.</td></tr>`;
                 }
             } catch (err) {
-                statusDiv.innerText = "❌ Errore di connessione.";
-                statusDiv.style.color = "red";
+                console.error("Errore recupero spot:", err);
             }
-        });
+        }
+
+        // Filtri ed aggiornamento automatico ogni 30 secondi
+        document.getElementById('filterBand').addEventListener('change', loadSpots);
+        document.getElementById('filterMode').addEventListener('change', loadSpots);
+        
+        loadSpots();
+        setInterval(loadSpots, 30000);
     </script>
 </body>
 </html>
