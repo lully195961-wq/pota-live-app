@@ -1,5 +1,6 @@
 import os
-import httpx    
+import httpx
+import telnetlib
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,9 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# CREDENZIALI POTA
-POTA_USERNAME = "ik6lmb@libero.it"
-POTA_PASSWORD = "Marilin1!"
+# Il tuo identificativo ufficiale per accedere alla rete dei cluster
+CLUSTER_LOGIN_CALLSIGN = "IK6LMB"
 
 @app.get("/api/spots")
 async def get_pota_spots():
@@ -34,62 +34,50 @@ async def get_pota_spots():
 async def send_pota_spot(request: Request):
     data = await request.json()
     
-    login_url = "https://api.pota.app/auth/login"
-    login_payload = {
-        "username": POTA_USERNAME, 
-        "password": POTA_PASSWORD
-    }
+    activator = data.get("activator", "").upper().strip()
+    reference = data.get("reference", "").upper().strip()
+    mode = data.get("mode", "").upper().strip()
+    comments = data.get("comments", "").strip()
     
-    headers_login = {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
-    
-    async with httpx.AsyncClient() as client:
-        try:
-            # Effettua il login esplicito con gli header JSON corretti
-            login_response = await client.post(login_url, json=login_payload, headers=headers_login)
-            
-            if login_response.status_code != 200:
-                return {"success": False, "message": f"Login fallito (Codice {login_response.status_code}): {login_response.text}"}
-                
-            token_data = login_response.json()
-            pota_jwt_token = token_data.get("token")
-            
-            if not pota_jwt_token:
-                return {"success": False, "message": "Token non trovato nella risposta di login di POTA."}
-            
-            activator = data.get("activator", "").upper().strip()
-            spotter = data.get("spotter", "").upper().strip()
-            reference = data.get("reference", "").upper().strip()
-            mode = data.get("mode", "").upper().strip()
-            
-            freq_khz = float(data.get("frequency", 0))
-            freq_mhz = freq_khz / 1000.0 if freq_khz > 1000 else freq_khz
+    # Conversione della frequenza da kHz (es. 7047) a MHz (es. 7.047)
+    try:
+        freq_khz = float(data.get("frequency", 0))
+        freq_mhz = freq_khz / 1000.0 if freq_khz > 1000 else freq_khz
+    except Exception:
+        return {"success": False, "message": "Frequenza inserita non valida."}
 
-            spot_url = "https://api.pota.app/spot"
-            pota_payload = {
-                "activator": activator,
-                "spotter": spotter,
-                "frequency": freq_mhz,
-                "mode": mode,
-                "reference": reference,
-                "comments": data.get("comments", "")
-            }
-            
-            headers_spot = {
-                "Authorization": f"Bearer {pota_jwt_token}", 
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-            
-            response = await client.post(spot_url, json=pota_payload, headers=headers_spot)
-            if response.status_code in [200, 201]:
-                return {"success": True, "message": "Spot inviato!"}
-            return {"success": False, "message": f"Errore POTA {response.status_code}: {response.text}"}
-            
-        except Exception as e:
-            return {"success": False, "message": f"Errore di connessione: {str(e)}"}
+    if not activator or freq_mhz == 0 or not reference:
+        return {"success": False, "message": "Mancano dati obbligatori (Attivatore, Frequenza o Referenza)."}
+
+    # Costruzione del comando DX Cluster corretto: DX [frequenza] [attivatore] [commenti con referenza]
+    # Esempio: DX 7.047 IK6LMB POTA IT-1031 FT8
+    comment_string = f"POTA {reference} {mode} {comments}".strip()
+    cluster_command = f"DX {freq_mhz:.3f} {activator} {comment_string}\r\n"
+
+    # Configurazione del server DX Cluster scelto
+    CLUSTER_HOST = "ik4icz.dyndns.org"
+    CLUSTER_PORT = 8000
+
+    try:
+        # Apertura connessione Telnet immediata
+        tn = telnetlib.Telnet(CLUSTER_HOST, CLUSTER_PORT, timeout=5)
+        
+        # Attesa del prompt d'ingresso "login:" per inviare il tuo callsign
+        tn.read_until(b"login:", timeout=3)
+        tn.write(f"{CLUSTER_LOGIN_CALLSIGN}\r\n".encode('ascii'))
+        
+        # Aspetta una frazione di secondo per l'accettazione del login e invia lo spot
+        tn.read_very_eager()
+        tn.write(cluster_command.encode('ascii'))
+        
+        # Chiusura pulita della sessione sul cluster
+        tn.write(b"quit\r\n")
+        tn.close()
+        
+        return {"success": True, "message": f"✓ Spot inviato con successo tramite {CLUSTER_HOST}!"}
+        
+    except Exception as e:
+        return {"success": False, "message": f"Errore di connessione al Cluster: {str(e)}"}
 
 @app.get("/")
 def read_root():
