@@ -30,14 +30,26 @@
             <form id="spotForm">
                 <label for="activator">Attivatore:</label>
                 <input type="text" id="activator" required placeholder="es. IK6LMB" style="text-transform: uppercase;">
+                
                 <label for="frequency">Frequenza (kHz):</label>
                 <input type="number" id="frequency" required placeholder="es. 7047">
+                
+                <label for="inputMode">Modo:</label>
+                <select id="inputMode" required>
+                    <option value="FT8">FT8</option>
+                    <option value="CW">CW</option>
+                    <option value="SSB">SSB</option>
+                </select>
+
                 <label for="reference">Referenza POTA:</label>
                 <input type="text" id="reference" required placeholder="es. IT-1031" style="text-transform: uppercase;">
+                
                 <label for="spotter">Spotter:</label>
                 <input type="text" id="spotter" required placeholder="es. IK6LMB" style="text-transform: uppercase;">
+                
                 <label for="comments">Commenti:</label>
-                <textarea id="comments" placeholder="es. FT8 o CW"></textarea>
+                <textarea id="comments" placeholder="es. Activation live"></textarea>
+                
                 <button type="submit">Invia Spot</button>
             </form>
             <div id="status" style="margin-top:10px; text-align:center; font-weight:bold;"></div>
@@ -94,6 +106,7 @@
             const payload = {
                 activator: document.getElementById('activator').value.toUpperCase().trim(),
                 frequency: parseInt(document.getElementById('frequency').value),
+                mode: document.getElementById('inputMode').value,
                 reference: document.getElementById('reference').value.toUpperCase().trim(),
                 spotter: document.getElementById('spotter').value.toUpperCase().trim(),
                 comments: document.getElementById('comments').value
@@ -111,15 +124,17 @@
         });
 
         function getBand(freqStr) {
-            const freq = parseFloat(freqStr);
-            if (freq >= 3500 && freq <= 3800) return "80m";
-            if (freq >= 7000 && freq <= 7300) return "40m";
-            if (freq >= 10100 && freq <= 10150) return "30m";
-            if (freq >= 14000 && freq <= 14350) return "20m";
-            if (freq >= 18068 && freq <= 18168) return "17m";
-            if (freq >= 21000 && freq <= 21450) return "15m";
-            if (freq >= 24890 && freq <= 24990) return "12m";
-            if (freq >= 28000 && freq <= 29700) return "10m";
+            const freq = parseFloat(freqStr) * 1000; // Riporta in kHz per il controllo banda se arriva in MHz
+            const checkFreq = freq > 1000000 ? freq / 1000 : freq; 
+            
+            if (checkFreq >= 3500 && checkFreq <= 3800) return "80m";
+            if (checkFreq >= 7000 && checkFreq <= 7300) return "40m";
+            if (checkFreq >= 10100 && checkFreq <= 10150) return "30m";
+            if (checkFreq >= 14000 && checkFreq <= 14350) return "20m";
+            if (checkFreq >= 18068 && checkFreq <= 18168) return "17m";
+            if (checkFreq >= 21000 && checkFreq <= 21450) return "15m";
+            if (checkFreq >= 24890 && checkFreq <= 24990) return "12m";
+            if (checkFreq >= 28000 && checkFreq <= 29700) return "10m";
             return "Altro";
         }
 
@@ -156,7 +171,7 @@
                     tr.innerHTML = `
                         <td>${timeStr}</td>
                         <td><strong>${spot.activator || "N/A"}</strong></td>
-                        <td>${freq} kHz</td>
+                        <td>${freq} MHz</td>
                         <td><span class="badge">${mode}</span></td>
                         <td>${spot.reference || "N/A"}</td>
                     `;
