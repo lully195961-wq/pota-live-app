@@ -6,6 +6,7 @@ import httpx
 
 app = FastAPI()
 
+# Permette la comunicazione fluida tra le pagine
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,6 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 🔐 CREDENZIALI POTA
 POTA_USERNAME = "ik6lmb@libero.it"
 POTA_PASSWORD = "Marilin1!"
 
@@ -29,6 +31,7 @@ async def send_pota_spot(request: Request):
     
     async with httpx.AsyncClient() as client:
         try:
+            # 1. Login su POTA (Su Render passa all'istante senza proxy!)
             login_response = await client.post(login_url, json=login_payload)
             if login_response.status_code != 200:
                 return {"success": False, "message": f"Errore Login POTA: {login_response.text}"}
@@ -38,6 +41,7 @@ async def send_pota_spot(request: Request):
             if not pota_jwt_token:
                 return {"success": False, "message": "Impossibile recuperare il token."}
             
+            # 2. Invio dello Spot
             spot_url = "https://api.pota.app/spot"
             pota_payload = {
                 "activator": data.get("activator", "").upper(),
