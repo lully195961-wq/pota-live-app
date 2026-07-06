@@ -16,23 +16,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- PARTE 1: LETTURA SPOT (Ripristino tabella) ---
+# --- ROTTA PER CARICARE LA TABELLA LIVE ---
 @app.get("/api/spots")
 async def get_pota_spots():
     url = "https://api.pota.app/spot"
     async with httpx.AsyncClient() as client:
         try:
-            # Aggiungiamo un header per apparire come un browser legittimo
+            # Header per emulare un browser ed evitare blocchi
             headers = {"User-Agent": "Mozilla/5.0"}
             response = await client.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
                 return response.json()
             return []
-        except Exception as e:
-            print(f"Errore lettura spot: {e}")
+        except Exception:
             return []
 
-# --- PARTE 2: INVIO SPOT (Via Cluster) ---
+# --- ROTTA PER L'INVIO VIA CLUSTER ---
 @app.post("/api/spot")
 async def send_pota_spot(request: Request):
     data = await request.json()
@@ -50,19 +49,21 @@ async def send_pota_spot(request: Request):
     if not activator or freq_mhz == 0 or not reference:
         return {"success": False, "message": "Dati mancanti."}
 
+    # Sintassi standard DX Cluster: DX [freq] [call] [commento]
     comment_string = f"POTA-{reference} {mode} {comments}".strip()
     cluster_command = f"DX {freq_mhz:.3f} {activator} {comment_string}\r\n"
 
     try:
+        # Connessione al Cluster ik4icz
         reader, writer = await telnetlib3.open_connection('ik4icz.dyndns.org', 8000)
         await reader.readuntil(b'login:')
-        writer.write(f"IK6LMB\r\n")
+        writer.write(f"IK6LMB\r\n") # Tuo login
         writer.write(cluster_command)
         await writer.drain()
         writer.close()
-        return {"success": True, "message": "Spot inviato al Cluster!"}
+        return {"success": True, "message": "Spot inviato correttamente!"}
     except Exception as e:
-        return {"success": False, "message": f"Errore cluster: {str(e)}"}
+        return {"success": False, "message": f"Errore: {str(e)}"}
 
 @app.get("/")
 def read_root():
