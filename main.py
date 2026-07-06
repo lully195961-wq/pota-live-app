@@ -17,14 +17,15 @@ app.add_middleware(
 POTA_USERNAME = "ik6lmb@libero.it"
 POTA_PASSWORD = "Marilin1!"
 
-# NUOVA ROTTA: Recupera l'elenco degli spot attivi direttamente da POTA
+# ROTTA CORRETTA: Recupera gli ultimi spot live ed evita raggruppamenti complessi
 @app.get("/api/spots")
 async def get_pota_spots():
-    url = "https://api.pota.app/spot/activations"
+    url = "https://api.pota.app/spot"
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(url)
             if response.status_code == 200:
+                # L'API /spot restituisce direttamente un array di spot individuali
                 return response.json()
             return []
         except Exception:
