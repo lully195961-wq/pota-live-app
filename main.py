@@ -44,16 +44,21 @@ async def send_pota_spot(request: Request):
             token_data = login_response.json()
             pota_jwt_token = token_data.get("token") or token_data.get("accessToken", "")
             
-            # Forziamo maiuscole e pulizia degli spazi superflui
             activator = data.get("activator", "").upper().strip()
             spotter = data.get("spotter", "").upper().strip()
             reference = data.get("reference", "").upper().strip()
+            mode = data.get("mode", "").upper().strip()
             
+            # CONVERSIONE FONDAMENTALE: POTA vuole la frequenza in MHz (es. 7.047)
+            freq_khz = float(data.get("frequency", 0))
+            freq_mhz = freq_khz / 1000.0 if freq_khz > 1000 else freq_khz
+
             spot_url = "https://api.pota.app/spot"
             pota_payload = {
                 "activator": activator,
                 "spotter": spotter,
-                "frequency": int(data.get("frequency", 0)),
+                "frequency": freq_mhz,
+                "mode": mode,
                 "reference": reference,
                 "comments": data.get("comments", "")
             }
@@ -62,7 +67,7 @@ async def send_pota_spot(request: Request):
             response = await client.post(spot_url, json=pota_payload, headers=headers)
             if response.status_code in [200, 201]:
                 return {"success": True, "message": "Spot inviato!"}
-            return {"success": False, "message": response.text}
+            return {"success": False, "message": f"Errore {response.status_code}: {response.text}"}
         except Exception as e:
             return {"success": False, "message": str(e)}
 
