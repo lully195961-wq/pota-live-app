@@ -15,9 +15,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Il tuo identificativo ufficiale per accedere alla rete dei cluster
-CLUSTER_LOGIN_CALLSIGN = "IK6LMB"
-
 @app.get("/api/spots")
 async def get_pota_spots():
     url = "https://api.pota.app/spot"
@@ -35,49 +32,48 @@ async def send_pota_spot(request: Request):
     data = await request.json()
     
     activator = data.get("activator", "").upper().strip()
+    spotter = data.get("spotter", "").upper().strip()
     reference = data.get("reference", "").upper().strip()
     mode = data.get("mode", "").upper().strip()
     comments = data.get("comments", "").strip()
     
-    # Conversione della frequenza da kHz (es. 7047) a MHz (es. 7.047)
+    # Conversione frequenza da kHz (es. 7047) a MHz (es. 7.047) richiesta dai cluster
     try:
         freq_khz = float(data.get("frequency", 0))
         freq_mhz = freq_khz / 1000.0 if freq_khz > 1000 else freq_khz
     except Exception:
-        return {"success": False, "message": "Frequenza inserita non valida."}
+        return {"success": False, "message": "Frequenza non valida."}
 
-    if not activator or freq_mhz == 0 or not reference:
-        return {"success": False, "message": "Mancano dati obbligatori (Attivatore, Frequenza o Referenza)."}
+    if not spotter or not activator or freq_mhz == 0:
+        return {"success": False, "message": "Mancano i dati obbligatori (Spotter, Attivatore o Frequenza)."}
 
-    # Costruzione del comando DX Cluster corretto: DX [frequenza] [attivatore] [commenti con referenza]
-    # Esempio: DX 7.047 IK6LMB POTA IT-1031 FT8
+    # Configurazione della stringa dello spot secondo lo standard DX Cluster
+    # Sintassi: DX SPOTTER FREQ_MHZ ACTIVATOR COMMENTI_E_REFERENZA
+    # Esempio: DX IK6LMB 7.047 K2L POTA US-2157 FT8
     comment_string = f"POTA {reference} {mode} {comments}".strip()
-    cluster_command = f"DX {freq_mhz:.3f} {activator} {comment_string}\r\n"
+    cluster_command = f"DX {spotter} {freq_mhz:.3f} {activator} {comment_string}\r\n"
 
-    # Configurazione del server DX Cluster scelto
-    CLUSTER_HOST = "ik4icz.dyndns.org"
-    CLUSTER_PORT = 8000
+    # INVIO TRAMITE DX CLUSTER (Bypassa i blocchi AWS di POTA)
+    CLUSTER_HOST = "dxc.ik5xct.it"
+    CLUSTER_PORT = 7300
 
     try:
-        # Apertura connessione Telnet immediata
+        # Connessione Telnet rapida al cluster
         tn = telnetlib.Telnet(CLUSTER_HOST, CLUSTER_PORT, timeout=5)
         
-        # Attesa del prompt d'ingresso "login:" per inviare il tuo callsign
+        # Aspetta la richiesta del CallSign dal cluster ed effettua il login
         tn.read_until(b"login:", timeout=3)
-        tn.write(f"{CLUSTER_LOGIN_CALLSIGN}\r\n".encode('ascii'))
+        tn.write(f"{spotter}\r\n".encode('ascii'))
         
-        # Aspetta una frazione di secondo per l'accettazione del login e invia lo spot
-        tn.read_very_eager()
+        # Invia il comando dello spot
         tn.write(cluster_command.encode('ascii'))
-        
-        # Chiusura pulita della sessione sul cluster
         tn.write(b"quit\r\n")
         tn.close()
         
-        return {"success": True, "message": f"✓ Spot inviato con successo tramite {CLUSTER_HOST}!"}
+        return {"success": True, "message": f"Spot inviato al Cluster {CLUSTER_HOST}! Apparirà a breve su POTA."}
         
     except Exception as e:
-        return {"success": False, "message": f"Errore di connessione al Cluster: {str(e)}"}
+        return {"success": False, "message": f"Errore connessione Cluster: {str(e)}"}
 
 @app.get("/")
 def read_root():
