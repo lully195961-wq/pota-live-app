@@ -1,6 +1,7 @@
 import os
 import httpx
-import telnetlib
+import telnetlib3
+import asyncio
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +15,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Nominativo ufficiale per l'accesso al Cluster
+CLUSTER_LOGIN_CALLSIGN = "IK6LMB"
 
 @app.get("/api/spots")
 async def get_pota_spots():
@@ -32,46 +36,37 @@ async def send_pota_spot(request: Request):
     data = await request.json()
     
     activator = data.get("activator", "").upper().strip()
-    spotter = data.get("spotter", "").upper().strip()
     reference = data.get("reference", "").upper().strip()
     mode = data.get("mode", "").upper().strip()
     comments = data.get("comments", "").strip()
     
-    # Conversione frequenza da kHz (es. 7047) a MHz (es. 7.047) richiesta dai cluster
     try:
         freq_khz = float(data.get("frequency", 0))
         freq_mhz = freq_khz / 1000.0 if freq_khz > 1000 else freq_khz
-    except Exception:
+    except:
         return {"success": False, "message": "Frequenza non valida."}
 
-    if not spotter or not activator or freq_mhz == 0:
-        return {"success": False, "message": "Mancano i dati obbligatori (Spotter, Attivatore o Frequenza)."}
+    if not activator or freq_mhz == 0 or not reference:
+        return {"success": False, "message": "Dati obbligatori mancanti (Attivatore, Frequenza, Referenza)."}
 
-    # Configurazione della stringa dello spot secondo lo standard DX Cluster
-    # Sintassi: DX SPOTTER FREQ_MHZ ACTIVATOR COMMENTI_E_REFERENZA
-    # Esempio: DX IK6LMB 7.047 K2L POTA US-2157 FT8
+    # Comando DX standard per il cluster: DX [frequenza] [attivatore] [commenti]
     comment_string = f"POTA {reference} {mode} {comments}".strip()
-    cluster_command = f"DX {spotter} {freq_mhz:.3f} {activator} {comment_string}\r\n"
-
-    # INVIO TRAMITE DX CLUSTER (Bypassa i blocchi AWS di POTA)
-    CLUSTER_HOST = "dxc.ik5xct.it"
-    CLUSTER_PORT = 7300
+    cluster_command = f"DX {freq_mhz:.3f} {activator} {comment_string}\r\n"
 
     try:
-        # Connessione Telnet rapida al cluster
-        tn = telnetlib.Telnet(CLUSTER_HOST, CLUSTER_PORT, timeout=5)
+        # Connessione asincrona al Cluster
+        reader, writer = await telnetlib3.open_connection('ik4icz.dyndns.org', 8000)
         
-        # Aspetta la richiesta del CallSign dal cluster ed effettua il login
-        tn.read_until(b"login:", timeout=3)
-        tn.write(f"{spotter}\r\n".encode('ascii'))
+        # Attesa del prompt di login e invio callsign
+        await reader.readuntil(b'login:')
+        writer.write(f"{CLUSTER_LOGIN_CALLSIGN}\r\n")
         
-        # Invia il comando dello spot
-        tn.write(cluster_command.encode('ascii'))
-        tn.write(b"quit\r\n")
-        tn.close()
+        # Invio comando DX e chiusura
+        writer.write(cluster_command)
+        await writer.drain()
+        writer.close()
         
-        return {"success": True, "message": f"Spot inviato al Cluster {CLUSTER_HOST}! Apparirà a breve su POTA."}
-        
+        return {"success": True, "message": "Spot inviato con successo al Cluster!"}
     except Exception as e:
         return {"success": False, "message": f"Errore connessione Cluster: {str(e)}"}
 
