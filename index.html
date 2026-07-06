@@ -29,13 +29,13 @@
             <h2>Invia Auto-Spot</h2>
             <form id="spotForm">
                 <label for="activator">Attivatore:</label>
-                <input type="text" id="activator" required placeholder="es. IK6LMB">
+                <input type="text" id="activator" required placeholder="es. IK6LMB" style="text-transform: uppercase;">
                 <label for="frequency">Frequenza (kHz):</label>
                 <input type="number" id="frequency" required placeholder="es. 7047">
                 <label for="reference">Referenza POTA:</label>
-                <input type="text" id="reference" required placeholder="es. I-0123">
+                <input type="text" id="reference" required placeholder="es. IT-1031" style="text-transform: uppercase;">
                 <label for="spotter">Spotter:</label>
-                <input type="text" id="spotter" required placeholder="es. IK6LMB">
+                <input type="text" id="spotter" required placeholder="es. IK6LMB" style="text-transform: uppercase;">
                 <label for="comments">Commenti:</label>
                 <textarea id="comments" placeholder="es. FT8 o CW"></textarea>
                 <button type="submit">Invia Spot</button>
@@ -86,16 +86,16 @@
     </div>
 
     <script>
-        // Gestione Invio Spot
         document.getElementById('spotForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const statusDiv = document.getElementById('status');
             statusDiv.innerText = "Invio..."; statusDiv.style.color = "blue";
+            
             const payload = {
-                activator: document.getElementById('activator').value,
+                activator: document.getElementById('activator').value.toUpperCase().trim(),
                 frequency: parseInt(document.getElementById('frequency').value),
-                reference: document.getElementById('reference').value,
-                spotter: document.getElementById('spotter').value,
+                reference: document.getElementById('reference').value.toUpperCase().trim(),
+                spotter: document.getElementById('spotter').value.toUpperCase().trim(),
                 comments: document.getElementById('comments').value
             };
             try {
@@ -105,12 +105,11 @@
                     body: JSON.stringify(payload)
                 });
                 const res = await r.json();
-                if(res.success) { statusDiv.innerText = "✓ Spot Inviato!"; statusDiv.style.color = "green"; loadSpots(); }
+                if(res.success) { statusDiv.innerText = "✓ Spot Inviato con Successo!"; statusDiv.style.color = "green"; loadSpots(); }
                 else { statusDiv.innerText = "❌ Errore: " + res.message; statusDiv.style.color = "red"; }
             } catch { statusDiv.innerText = "❌ Errore di connessione."; statusDiv.style.color = "red"; }
         });
 
-        // Mappatura robusta delle bande HF
         function getBand(freqStr) {
             const freq = parseFloat(freqStr);
             if (freq >= 3500 && freq <= 3800) return "80m";
@@ -124,7 +123,6 @@
             return "Altro";
         }
 
-        // Caricamento e rendering flessibile della lista spot
         async function loadSpots() {
             try {
                 const response = await fetch('/api/spots');
@@ -145,11 +143,9 @@
                     const band = getBand(freq);
                     const mode = (spot.mode || "N/A").toUpperCase();
                     
-                    // Applicazione controlli filtri dinamici
                     if (bandFilter !== "ALL" && band !== bandFilter) return;
                     if (modeFilter !== "ALL" && !mode.includes(modeFilter)) return;
 
-                    // Formattazione dell'orario UTC
                     let timeStr = "N/A";
                     if (spot.spotTime) {
                         const date = new Date(spot.spotTime);
@@ -172,7 +168,6 @@
                 }
             } catch (err) {
                 console.error("Errore recupero spot:", err);
-                document.getElementById('spotsTableBody').innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Errore di caricamento dati.</td></tr>`;
             }
         }
 
@@ -180,7 +175,7 @@
         document.getElementById('filterMode').addEventListener('change', loadSpots);
         
         loadSpots();
-        setInterval(loadSpots, 30000); // Polling automatico ogni 30 secondi
+        setInterval(loadSpots, 30000);
     </script>
 </body>
 </html>
