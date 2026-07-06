@@ -16,7 +16,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Nominativo ufficiale per l'accesso al Cluster
 CLUSTER_LOGIN_CALLSIGN = "IK6LMB"
 
 @app.get("/api/spots")
@@ -34,7 +33,6 @@ async def get_pota_spots():
 @app.post("/api/spot")
 async def send_pota_spot(request: Request):
     data = await request.json()
-    
     activator = data.get("activator", "").upper().strip()
     reference = data.get("reference", "").upper().strip()
     mode = data.get("mode", "").upper().strip()
@@ -47,31 +45,23 @@ async def send_pota_spot(request: Request):
         return {"success": False, "message": "Frequenza non valida."}
 
     if not activator or freq_mhz == 0 or not reference:
-        return {"success": False, "message": "Dati obbligatori mancanti (Attivatore, Frequenza, Referenza)."}
+        return {"success": False, "message": "Dati obbligatori mancanti."}
 
-    # Comando DX standard per il cluster: DX [frequenza] [attivatore] [commenti]
-    comment_string = f"POTA {reference} {mode} {comments}".strip()
+    # Sintassi standardizzata per i cluster
+    comment_string = f"POTA-{reference} {mode} {comments}".strip()
     cluster_command = f"DX {freq_mhz:.3f} {activator} {comment_string}\r\n"
 
     try:
-        # Connessione asincrona al Cluster
         reader, writer = await telnetlib3.open_connection('ik4icz.dyndns.org', 8000)
-        
-        # Attesa del prompt di login e invio callsign
         await reader.readuntil(b'login:')
         writer.write(f"{CLUSTER_LOGIN_CALLSIGN}\r\n")
-        
-        # Invio comando DX e chiusura
         writer.write(cluster_command)
         await writer.drain()
         writer.close()
-        
-        return {"success": True, "message": "Spot inviato con successo al Cluster!"}
+        return {"success": True, "message": "Spot inviato con successo!"}
     except Exception as e:
-        return {"success": False, "message": f"Errore connessione Cluster: {str(e)}"}
+        return {"success": False, "message": f"Errore: {str(e)}"}
 
 @app.get("/")
 def read_root():
-    if os.path.exists("index.html"):
-        return FileResponse("index.html")
-    return HTMLResponse("<h1>File index.html non trovato nel server</h1>")
+    return FileResponse("index.html")
