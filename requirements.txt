@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+telnetlib3
+python-multipart
