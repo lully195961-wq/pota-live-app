@@ -17,7 +17,6 @@ app.add_middleware(
 POTA_USERNAME = "ik6lmb@libero.it"
 POTA_PASSWORD = "Marilin1!"
 
-# ROTTA CORRETTA: Recupera gli ultimi spot live ed evita raggruppamenti complessi
 @app.get("/api/spots")
 async def get_pota_spots():
     url = "https://api.pota.app/spot"
@@ -25,7 +24,6 @@ async def get_pota_spots():
         try:
             response = await client.get(url)
             if response.status_code == 200:
-                # L'API /spot restituisce direttamente un array di spot individuali
                 return response.json()
             return []
         except Exception:
@@ -46,12 +44,17 @@ async def send_pota_spot(request: Request):
             token_data = login_response.json()
             pota_jwt_token = token_data.get("token") or token_data.get("accessToken", "")
             
+            # Forziamo maiuscole e pulizia degli spazi superflui
+            activator = data.get("activator", "").upper().strip()
+            spotter = data.get("spotter", "").upper().strip()
+            reference = data.get("reference", "").upper().strip()
+            
             spot_url = "https://api.pota.app/spot"
             pota_payload = {
-                "activator": data.get("activator", "").upper(),
-                "spotter": data.get("spotter", "").upper(),
+                "activator": activator,
+                "spotter": spotter,
                 "frequency": int(data.get("frequency", 0)),
-                "reference": data.get("reference", "").upper(),
+                "reference": reference,
                 "comments": data.get("comments", "")
             }
             
