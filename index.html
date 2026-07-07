@@ -7,8 +7,8 @@
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#3498db">
-    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/3122/3122324.png">
-    <link rel="apple-touch-icon" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/3122/3122324.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon.png">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <style>
@@ -24,14 +24,16 @@
         .form-label { margin-bottom: 0.2rem; font-size: 13px; font-weight: bold; }
         .form-control, .form-select { padding: 0.4rem 0.6rem; font-size: 13px; }
 
-        /* OTTIMIZZAZIONE SPECIFICA PER SMARTPHONE */
+        /* OTTIMIZZAZIONE COMPATTA PER SCHERMI CELLULARE */
         @media (max-width: 768px) {
-            body { padding: 6px; }
-            .card, .table-container { padding: 10px !important; margin-bottom: 10px; }
-            th { font-size: 11px; }
-            td { font-size: 11px; }
-            .badge-mode { font-size: 10px; padding: 2px 4px; }
-            h3 { font-size: 1.1rem; }
+            body { padding: 5px; }
+            .card, .table-container { padding: 8px !important; margin-bottom: 8px; }
+            th { font-size: 10.5px; padding: 6px 3px !important; }
+            td { font-size: 10.5px; padding: 6px 3px !important; }
+            .badge-mode { font-size: 9.5px; padding: 2px 3px; }
+            h3 { font-size: 1.05rem; margin-bottom: 10px !important; }
+            .form-control, .form-select { padding: 0.35rem 0.5rem; font-size: 12px; }
+            .form-label { font-size: 12px; }
         }
     </style>
 </head>
@@ -78,7 +80,7 @@
                 </div>
                 
                 <button id="btnInvia" class="btn btn-primary w-100" onclick="inviaSpot()">Invia Spot</button>
-                <div id="statusResult" class="text-center mt-2 font-weight-bold" style="font-size: 13px;"></div>
+                <div id="statusResult" class="text-center mt-2 font-weight-bold" style="font-size: 12px;"></div>
             </div>
         </div>
 
@@ -89,8 +91,18 @@
                     <div class="col">
                         <select id="filterBand" class="form-select form-select-sm" onchange="loadSpots()">
                             <option value="all">Tutte le bande</option>
+                            <option value="6m">6 metri (50 MHz)</option>
+                            <option value="10m">10 metri (28 MHz)</option>
+                            <option value="12m">12 metri (24 MHz)</option>
+                            <option value="15m">15 metri (21 MHz)</option>
+                            <option value="17m">17 metri (18 MHz)</option>
                             <option value="20m">20 metri (14 MHz)</option>
+                            <option value="30m">30 metri (10 MHz)</option>
                             <option value="40m">40 metri (7 MHz)</option>
+                            <option value="60m">60 metri (5.3 MHz)</option>
+                            <option value="80m">80 metri (3.5 MHz)</option>
+                            <option value="160m">160 metri (1.8 MHz)</option>
+                            <option value="2m">2 metri (144 MHz)</option>
                         </select>
                     </div>
                     <div class="col">
@@ -124,7 +136,7 @@
 </div>
 
 <script>
-    const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN2hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImY5MTA3YmIxLTBlOWQtNGMxNi1iNTg1LWMzMjNlZmVlZjU2NSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM0MjUzOTcsImV4cCI6MTczMzQyODk5NywiaWF0IjoxNzgzNDI1Mzk3LCJqdGkiOiJiOTNhMGM5ZC0zNDUwLTQ2YjUtYmEzYi01MjU2ZjljMWVkMmUiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.Hc1ZIbWyHhQmjp1N_Tar0oZ1b46FG8u1XGm7PNoGcjL03dRe95qrzxtnhPWM6Iasl_qpdbo67pmauogI20LHVxlhOvfZet6QSxNAf13su3Zkxk7_829QZBE2hmg5ngJDWUhDueOi1KfMzJhuIHlF0uA5ju14TEDzq7FDcPwTXcqgFXXkz1X84RnvMIW_0vtsi_qJtOkGe04rZJ8JrT5kRhYpbP0B5V02Bzvp2GXJI-4gcch4kclwLsBtAq4rtc7_7klTsM7Ukx96se9Dbo3EmwW42eaFQ__H1mT0xhIxX9jwDu4G4MUmXf582i6Zzs0mrBvt1DLRh2yQMW2WlBsO7A";
+    const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2cognRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN7hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImY5MTA3YmIxLTBlOWQtNGMxNi1iNTg1LWMzMjNlZmVlZjU2NSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM0MjUzOTcsImV4cCI6MTczMzQyODk5NywiaWF0IjoxNzgzNDI1Mzk3LCJqdGkiOiJiOTNhMGM5ZC0zNDUwLTQ2YjUtYmEzYi01MjU2ZjljMWVkMmUiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.Hc1ZIbWyHhQmjp1N_Tar0oZ1b46FG8u1XGm7PNoGcjL03dRe95qrzxtnhPWM6Iasl_qpdbo67pmauogI20LHVxlhOvfZet6QSxNAf13su3Zkxk7_829QZBE2hmg5ngJDWUhDueOi1KfMzJhuIHlF0uA5ju14TEDzq7FDcPwTXcqgFXXkz1X84RnvMIW_0vtsi_qJtOkGe04rZJ8JrT5kRhYpbP0B5V02Bzvp2GXJI-4gcch4kclwLsBtAq4rtc7_7klTsM7Ukx96se9Dbo3EmwW42eaFQ__H1mT0xhIxX9jwDu4G4MUmXf582i6Zzs0mrBvt1DLRh2yQMW2WlBsO7A";
 
     function inviaSpot() {
         const btn = document.getElementById('btnInvia');
@@ -167,18 +179,18 @@
         .then(response => {
             btn.disabled = false;
             if (response.status === 200 || response.status === 201) {
-                resDiv.innerHTML = "<span class='text-success'>✓ Spot Inviato con successo!</span>";
+                resDiv.innerHTML = "<span class='text-success'>✓ Spot Inviato!</span>";
                 setTimeout(() => { 
                     loadSpots(); 
                     resDiv.innerHTML = "";
                 }, 2000);
             } else {
-                resDiv.innerHTML = `<span class='text-danger'>X Rifiutato da POTA: Codice ${response.status}</span>`;
+                resDiv.innerHTML = `<span class='text-danger'>X Rifiutato: ${response.status}</span>`;
             }
         })
         .catch(error => {
             btn.disabled = false;
-            resDiv.innerHTML = `<span class='text-danger'>Errore di rete: ${error}</span>`;
+            resDiv.innerHTML = `<span class='text-danger'>Errore rete: ${error}</span>`;
         });
     }
 
@@ -203,8 +215,22 @@
                 data.forEach(spot => {
                     const freq = parseFloat(spot.frequency);
                     
-                    if(filtBand === "20m" && (freq < 14.0 || freq > 14.35)) return;
-                    if(filtBand === "40m" && (freq < 7.0 || freq > 7.3)) return;
+                    // LOGICA FILTRAGGIO BANDE AGGIORNATA
+                    if(filtBand !== "all") {
+                        if(filtBand === "6m" && (freq < 50.0 || freq > 54.0)) return;
+                        if(filtBand === "10m" && (freq < 28.0 || freq > 29.7)) return;
+                        if(filtBand === "12m" && (freq < 24.89 || freq > 24.99)) return;
+                        if(filtBand === "15m" && (freq < 21.0 || freq > 21.45)) return;
+                        if(filtBand === "17m" && (freq < 18.068 || freq > 18.168)) return;
+                        if(filtBand === "20m" && (freq < 14.0 || freq > 14.35)) return;
+                        if(filtBand === "30m" && (freq < 10.1 || freq > 10.15)) return;
+                        if(filtBand === "40m" && (freq < 7.0 || freq > 7.3)) return;
+                        if(filtBand === "60m" && (freq < 5.06 || freq > 5.45)) return;
+                        if(filtBand === "80m" && (freq < 3.5 || freq > 3.8)) return;
+                        if(filtBand === "160m" && (freq < 1.8 || freq > 2.0)) return;
+                        if(filtBand === "2m" && (freq < 144.0 || freq > 148.0)) return;
+                    }
+                    
                     if(filtMode !== "all" && spot.mode !== filtMode) return;
 
                     count++;
@@ -222,13 +248,15 @@
                         } else if (diffMins >= 60) {
                             const diffHours = Math.floor(diffMins / 60);
                             const remMins = diffMins % 60;
-                            timeStr = remMins > 0 ? `${diffHours}h ${remMins}m fa` : `${diffHours}h fa`;
+                            timeStr = remMins > 0 ? `${diffHours}h ${remMins}m` : `${diffHours}h`;
                         } else {
                             timeStr = `${diffMins}m fa`;
                         }
                     }
 
-                    const freqMhz = freq.toFixed(3);
+                    // Se la frequenza è espressa in kHz totali (es. 7074000), la adegua in MHz
+                    const displayFreq = freq > 1000 ? freq / 1000.0 : freq;
+                    const freqMhz = displayFreq.toFixed(3);
 
                     const row = `<tr>
                         <td>${timeStr}</td>
@@ -241,11 +269,11 @@
                 });
 
                 if(count === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nessun attivatore</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nessun attivatore trovato per i filtri selezionati</td></tr>`;
                 }
             })
             .catch(err => {
-                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Errore dati</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Errore caricamento dati</td></tr>`;
             });
     }
 
