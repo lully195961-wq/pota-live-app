@@ -9,7 +9,7 @@
         .side { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         #input-side { width: 350px; }
         #output-side { flex-grow: 1; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
         button { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
@@ -21,13 +21,13 @@
 <div class="wrapper">
     <div class="side" id="input-side">
         <h2>Invia Auto-Spot</h2>
-        <input type="text" id="activator" placeholder="Attivatore (es. IK6LMB)">
+        <input type="text" id="activator" placeholder="Attivatore">
         <input type="number" id="frequency" placeholder="Frequenza kHz">
         <select id="mode">
             <option value="FT8">FT8</option><option value="CW">CW</option>
-            <option value="SSB">SSB</option><option value="FT4">FT4</option>
+            <option value="SSB">SSB</option>
         </select>
-        <input type="text" id="reference" placeholder="Referenza (es. IT-1234)">
+        <input type="text" id="reference" placeholder="Referenza">
         <textarea id="comments" placeholder="Commenti"></textarea>
         <button onclick="sendSpot()">Invia Spot</button>
         <div id="message"></div>
@@ -39,8 +39,13 @@
             <option value="All">Tutte le bande</option>
             <option value="7">40m</option><option value="14">20m</option>
         </select>
+        <select id="modeFilter" onchange="loadSpots()">
+            <option value="All">Tutti i modi</option>
+            <option value="FT8">FT8</option><option value="CW">CW</option>
+            <option value="SSB">SSB</option>
+        </select>
         <table id="spotsTable">
-            <thead><tr><th>Attivatore</th><th>Frequenza</th><th>Referenza</th></tr></thead>
+            <thead><tr><th>Attivatore</th><th>Frequenza</th><th>Modo</th><th>Referenza</th></tr></thead>
             <tbody></tbody>
         </table>
     </div>
@@ -51,13 +56,16 @@
         const response = await fetch('/api/spots');
         const allSpots = await response.json();
         const band = document.getElementById('bandFilter').value;
+        const mode = document.getElementById('modeFilter').value;
         const tbody = document.querySelector('#spotsTable tbody');
         tbody.innerHTML = '';
         
-        allSpots.filter(s => band === 'All' || s.frequency.toString().startsWith(band))
-            .forEach(s => {
-                tbody.innerHTML += `<tr><td>${s.activator}</td><td>${s.frequency} kHz</td><td>${s.reference}</td></tr>`;
-            });
+        allSpots.filter(s => 
+            (band === 'All' || s.frequency.toString().startsWith(band)) &&
+            (mode === 'All' || s.mode === mode)
+        ).forEach(s => {
+            tbody.innerHTML += `<tr><td>${s.activator}</td><td>${s.frequency}</td><td>${s.mode}</td><td>${s.reference}</td></tr>`;
+        });
     }
 
     async function sendSpot() {
@@ -68,17 +76,9 @@
             reference: document.getElementById('reference').value,
             comments: document.getElementById('comments').value
         };
-        
-        const response = await fetch('/api/spot', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
-        
-        const res = await response.json();
+        const res = await (await fetch('/api/spot', {method: 'POST', body: JSON.stringify(data)})).json();
         document.getElementById('message').innerText = res.message;
         if(res.success) {
-            // Pulizia campi
             document.querySelectorAll('input, textarea').forEach(i => i.value = '');
         }
     }
