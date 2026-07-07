@@ -32,10 +32,6 @@ async def get_pota_spots():
 
 @app.post("/api/spot")
 async def proxy_pota_spot(request: Request):
-    """
-    Agisce da proxy puro: prende il payload dal frontend e lo inoltra a POTA 
-    includendo l'Authorization Header passato direttamente dal client.
-    """
     async with httpx.AsyncClient() as client:
         try:
             body = await request.body()
@@ -48,7 +44,6 @@ async def proxy_pota_spot(request: Request):
                 "Origin": "https://pota.app",
                 "Referer": "https://pota.app/"
             }
-            
             if auth_header:
                 pota_headers["Authorization"] = auth_header
 
@@ -58,18 +53,9 @@ async def proxy_pota_spot(request: Request):
                 headers=pota_headers,
                 timeout=10
             )
-            
-            return Response(
-                content=response.content,
-                status_code=response.status_code,
-                headers={"Content-Type": "application/json"}
-            )
+            return Response(content=response.content, status_code=response.status_code, headers={"Content-Type": "application/json"})
         except Exception as e:
-            return Response(
-                content=f'{{"success": false, "message": "{str(e)}"}}',
-                status_code=500,
-                headers={"Content-Type": "application/json"}
-            )
+            return Response(content=f'{{"success": false, "message": "{str(e)}"}}', status_code=500, headers={"Content-Type": "application/json"})
 
 @app.get("/")
 def read_root():
