@@ -1,204 +1,32 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POTA Auto-Spotter</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; margin: 0; }
-        .wrapper { display: flex; max-width: 1400px; margin: auto; gap: 20px; align-items: flex-start; }
-        .side { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); box-sizing: border-box; }
-        #input-side { width: 360px; flex-shrink: 0; }
-        #output-side { flex-grow: 1; }
-        h2 { text-align: center; color: #1e293b; margin-top: 0; margin-bottom: 20px; font-size: 24px; }
-        label { font-weight: bold; display: block; margin-top: 12px; color: #475569; font-size: 14px; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 6px 0 12px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        textarea { height: 80px; resize: none; }
-        button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        button:hover { background: #2980b9; }
-        #message { margin-top: 12px; font-weight: bold; text-align: center; font-size: 14px; }
-        .filters-container { display: flex; gap: 10px; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px 12px; text-align: left; font-size: 14px; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #3498db; color: white; font-weight: bold; }
-        tr:nth-child(even) { background-color: #f8fafc; }
-        .badge { display: inline-block; padding: 3px 8px; font-weight: bold; color: white; border-radius: 4px; font-size: 12px; text-align: center; }
-        .badge-ft8 { background-color: #e74c3c; }
-        .badge-cw { background-color: #d35400; }
-        .badge-ssb { background-color: #2980b9; }
-        .error-msg { color: #e74c3c; font-weight: bold; text-align: center; padding: 20px; font-size: 16px; }
-    </style>
-</head>
-<body>
+// IL TUO ACCESS TOKEN ATTIVO INSERITO DIRETTAMENTE NEL FRONTEND
+const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN2hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImY5MTA3YmIxLTBlOWQtNGMxNi1iNTg1LWMzMjNlZmVlZjU2NSIsInRva2VuX3VzZSI6ImYmY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM0MjUzOTcsImV4cCI6MTc4MzQyODk5NywiaWF0IjoxNzgzNDI1Mzk3LCJqdGkiOiJiOTNhMGM5ZC0zNDUwLTQ2YjUtYmEzYi01MjU2ZjljMWVkMmUiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.Hc1ZIbWyHhQmjp1N_Tar0oZ1b46FG8u1XGm7PNoGcjL03dRe95qrzxtnhPWM6Iasl_qpdbo67pmauogI20LHVxlhOvfZet6QSxNAf13su3Zkxk7_829QZBE2hmg5ngJDWUhDueOi1KfMzJhuIHlF0uA5ju14TEDzq7FDcPwTXcqgFXXkz1X84RnvMIW_0vtsi_qJtOkGe04rZJ8JrT5kRhYpbP0B5V02Bzvp2GXJI-4gcch4kclwLsBtAq4rtc7_7klTsM7Ukx96se9Dbo3EmwW42eaFQ__H1mT0xhIxX9jwDu4G4MUmXf582i6Zzs0mrBvt1DLRh2yQMW2WlBsO7A";
 
-<div class="wrapper">
-    <div class="side" id="input-side">
-        <h2>Invia Auto-Spot</h2>
-        <label>Attivatore:</label>
-        <input type="text" id="activator" placeholder="es. N5RAD">
-        <label>Frequenza (kHz):</label>
-        <input type="number" id="frequency" placeholder="14056">
-        <label>Modo:</label>
-        <select id="mode">
-            <option value="SSB">SSB</option>
-            <option value="FT8">FT8</option>
-            <option value="CW">CW</option>
-        </select>
-        <label>Referenza POTA:</label>
-        <input type="text" id="reference" placeholder="es. US-2912">
-        <label>Spotter:</label>
-        <input type="text" id="spotter" value="IK6LMB" disabled style="background: #f1f5f9; color: #64748b;">
-        <label>Commenti:</label>
-        <textarea id="comments" placeholder="es. FT8 o CW"></textarea>
-        <button onclick="sendSpot()">Invia Spot</button>
-        <div id="message"></div>
-    </div>
+// Esempio della chiamata fetch da modificare dentro index.html
+const freqKhz = parseFloat(document.getElementById('frequency').value);
+const freqMhz = freqKhz > 1000 ? freqKhz / 1000.0 : freqKhz;
 
-    <div class="side" id="output-side">
-        <h2>Attività POTA Live</h2>
-        <div class="filters-container">
-            <select id="bandFilter" onchange="displaySpots()">
-                <option value="All">Tutte le bande</option>
-                <option value="7">40m (7 MHz)</option>
-                <option value="14">20m (14 MHz)</option>
-            </select>
-            <select id="modeFilter" onchange="displaySpots()">
-                <option value="All">Tutti i modi</option>
-                <option value="SSB">SSB</option>
-                <option value="FT8">FT8</option>
-                <option value="CW">CW</option>
-            </select>
-        </div>
-        
-        <table id="spotsTable">
-            <thead>
-                <tr>
-                    <th>Ora (UTC)</th>
-                    <th>Attivatore</th>
-                    <th>Frequenza</th>
-                    <th>Modo</th>
-                    <th>Referenza</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="5" style="text-align:center;">Caricamento in corso...</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+const payload = {
+    activator: document.getElementById('activator').value.toUpperCase().trim(),
+    spotter: "IK6LMB",
+    frequency: freqMhz,
+    mode: document.getElementById('mode').value,
+    reference: document.getElementById('reference').value.toUpperCase().trim(),
+    comments: document.getElementById('comments').value || ""
+};
 
-<script>
-    let cachedSpots = [];
-
-    function formatTime(dateString) {
-        if (!dateString) return "--:-- UTC";
-        try {
-            const d = new Date(dateString);
-            return String(d.getUTCHours()).padStart(2, '0') + ":" + String(d.getUTCMinutes()).padStart(2, '0') + " UTC";
-        } catch(e) { return "--:-- UTC"; }
+fetch('/api/spot', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${POTA_TOKEN}` // Il token viene iniettato qui
+    },
+    body: JSON.stringify(payload)
+})
+.then(response => {
+    if (response.ok) {
+        alert("Spot inviato correttamente!");
+    } else {
+        alert("Errore durante l'invio dello spot: " + response.status);
     }
-
-    function getModeBadge(mode) {
-        if (!mode) return '';
-        const m = String(mode).toUpperCase().trim();
-        if (m === 'FT8' || m === 'FT4') return '<span class="badge badge-ft8">FT8</span>';
-        if (m === 'CW') return '<span class="badge badge-cw">CW</span>';
-        if (m === 'SSB') return '<span class="badge badge-ssb">SSB</span>';
-        return '<span class="badge">' + m + '</span>';
-    }
-
-    async function loadSpots() {
-        const tbody = document.querySelector('#spotsTable tbody');
-        try {
-            const response = await fetch('/api/spots');
-            const data = await response.json();
-            
-            // Se il backend ha restituito un errore strutturato, lo mostriamo esplicitamente
-            if (data && data.error) {
-                tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ ${data.error}</td></tr>`;
-                return;
-            }
-            
-            cachedSpots = data;
-            displaySpots();
-        } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ Errore di connessione JavaScript: ${e.message}</td></tr>`;
-        }
-    }
-
-    function displaySpots() {
-        const band = document.getElementById('bandFilter').value;
-        const mode = document.getElementById('modeFilter').value;
-        const tbody = document.querySelector('#spotsTable tbody');
-        tbody.innerHTML = '';
-
-        if (!Array.isArray(cachedSpots) || cachedSpots.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessuno spot attivo al momento.</td></tr>';
-            return;
-        }
-
-        cachedSpots.forEach(s => {
-            if (!s.frequency) return;
-            const freqFloat = parseFloat(s.frequency);
-            
-            let matchBand = (band === 'All' || Math.floor(freqFloat) === parseInt(band));
-            const sMode = s.mode ? String(s.mode).toUpperCase().trim() : '';
-            let matchMode = (mode === 'All' || sMode === mode.toUpperCase());
-            
-            if (matchBand && matchMode) {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${formatTime(s.spotTime)}</td>
-                    <td><strong>${s.activator || ''}</strong></td>
-                    <td>${freqFloat.toFixed(3)} MHz</td>
-                    <td>${getModeBadge(s.mode)}</td>
-                    <td>${s.reference || ''}</td>
-                `;
-                tbody.appendChild(row);
-            }
-        });
-        
-        if(tbody.innerHTML === '') {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessun risultato per i filtri selezionati.</td></tr>';
-        }
-    }
-
-    async function sendSpot() {
-        const msg = document.getElementById('message');
-        const data = {
-            activator: document.getElementById('activator').value,
-            frequency: document.getElementById('frequency').value,
-            mode: document.getElementById('mode').value,
-            reference: document.getElementById('reference').value,
-            comments: document.getElementById('comments').value
-        };
-        msg.innerText = "Invio in corso...";
-        msg.style.color = "#3498db";
-
-        try {
-            const response = await fetch('/api/spot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const res = await response.json();
-            if (res.success) {
-                msg.innerText = "✓ Spot Inviato!";
-                msg.style.color = "green";
-                setTimeout(loadSpots, 1500);
-            } else {
-                msg.innerText = "✗ " + res.message;
-                msg.style.color = "red";
-            }
-        } catch(e) {
-            msg.innerText = "✗ Errore di connessione.";
-            msg.style.color = "red";
-        }
-    }
-
-    loadSpots();
-    setInterval(loadSpots, 30000);
-</script>
-
-</body>
-</html>
+})
+.catch(error => console.error("Errore:", error));
