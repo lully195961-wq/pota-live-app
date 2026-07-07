@@ -34,11 +34,11 @@
         th:first-child { border-top-left-radius: 6px; }
         th:last-child { border-top-right-radius: 6px; }
 
-        /* Badge colorati per i Modi */
         .badge { display: inline-block; padding: 3px 8px; font-weight: bold; color: white; border-radius: 4px; font-size: 12px; text-align: center; min-width: 40px; }
         .badge-ft8 { background-color: #e74c3c; }
+        .badge-ft4 { background-color: #e74c3c; }
         .badge-cw { background-color: #d35400; }
-        .badge-ssb { background-color: #e74c3c; }
+        .badge-ssb { background-color: #2980b9; }
         .badge-default { background-color: #7f8c8d; }
     </style>
 </head>
@@ -80,10 +80,10 @@
         <div class="filters-container">
             <select id="bandFilter" onchange="displaySpots()">
                 <option value="All">Tutte le bande</option>
-                <option value="7">40m</option>
-                <option value="14">20m</option>
-                <option value="21">15m</option>
-                <option value="28">10m</option>
+                <option value="7">40m (7 MHz)</option>
+                <option value="14">20m (14 MHz)</option>
+                <option value="21">15m (21 MHz)</option>
+                <option value="28">10m (28 MHz)</option>
             </select>
             <select id="modeFilter" onchange="displaySpots()">
                 <option value="All">Tutti i modi</option>
@@ -113,4 +113,95 @@
     let cachedSpots = [];
 
     function formatTime(dateString) {
-        try
+        if (!dateString) return "--:-- UTC";
+        try {
+            const d = new Date(dateString);
+            return d.getUTCHours().toString().padStart(2, '0') + ":" + d.getUTCMinutes().toString().padStart(2, '0') + " UTC";
+        } catch(e) {
+            return "--:-- UTC";
+        }
+    }
+
+    function getModeBadge(mode) {
+        if (!mode) return '';
+        const m = mode.toUpperCase();
+        if (m === 'FT8') return `<span class="badge badge-ft8">FT8</span>`;
+        if (m === 'FT4') return `<span class="badge badge-ft4">FT4</span>`;
+        if (m === 'CW') return `<span class="badge badge-cw">CW</span>`;
+        if (m === 'SSB') return `<span class="badge badge-ssb">SSB</span>`;
+        return `<span class="badge badge-default">${m}</span>`;
+    }
+
+    async function loadSpots() {
+        try {
+            const response = await fetch('/api/spots');
+            cachedSpots = await response.json();
+            displaySpots();
+        } catch (e) {
+            console.error("Errore di caricamento:", e);
+        }
+    }
+
+    function displaySpots() {
+        const band = document.getElementById('bandFilter').value;
+        const mode = document.getElementById('modeFilter').value;
+        const tbody = document.querySelector('#spotsTable tbody');
+        tbody.innerHTML = '';
+
+        if (!Array.isArray(cachedSpots)) return;
+
+        const filtered = cachedSpots.filter(s => {
+            if (!s.frequency) return false;
+            
+            // Gestione filtro banda basato sulla parte intera della frequenza in MHz
+            const freqStr = s.frequency.toString();
+            const matchBand = band === 'All' || freqStr.startsWith(band + '.') || freqStr === band;
+            
+            // Gestione filtro modo
+            const sMode = s.mode ? s.mode.toUpperCase() : '';
+            const matchMode = mode === 'All' || sMode === mode.toUpperCase();
+            
+            return matchBand && matchMode;
+        });
+
+        filtered.forEach(s => {
+            const timeStr = formatTime(s.spotTime);
+            tbody.innerHTML += `
+                <tr>
+                    <td>${timeStr}</td>
+                    <td><strong>${s.activator || ''}</strong></td>
+                    <td>${s.frequency || ''} MHz</td>
+                    <td>${getModeBadge(s.mode)}</td>
+                    <td>${s.reference || ''}</td>
+                </tr>
+            `;
+        });
+    }
+
+    async function sendSpot() {
+        const msg = document.getElementById('message');
+        const data = {
+            activator: document.getElementById('activator').value,
+            frequency: document.getElementById('frequency').value,
+            mode: document.getElementById('mode').value,
+            reference: document.getElementById('reference').value,
+            comments: document.getElementById('comments').value
+        };
+
+        msg.innerText = "Invio in corso...";
+        msg.style.color = "#3498db";
+
+        try {
+            const response = await fetch('/api/spot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const res = await response.json();
+            
+            if (res.success) {
+                msg.innerText = "✓ Spot Inviato con Successo!";
+                msg.style.color = "green";
+                document.getElementById('activator').value = '';
+                document.getElementById('frequency').value = '';
+                document.
