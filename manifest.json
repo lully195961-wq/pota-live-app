@@ -3,14 +3,16 @@
   "name": "POTA Auto-Spotter Live",
   "icons": [
     {
-      "src": "https://img.icons8.com/fluency/192/antenna.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/8157/8157117.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
-      "src": "https://img.icons8.com/fluency/512/antenna.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/8157/8157117.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
     }
   ],
   "start_url": "/",
