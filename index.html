@@ -99,18 +99,18 @@
                     <div class="col">
                         <select id="filterBand" class="form-select form-select-sm" onchange="loadSpots()">
                             <option value="all">Tutte le bande</option>
-                            <option value="6">6 metri (50 MHz)</option>
-                            <option value="10">10 metri (28 MHz)</option>
-                            <option value="12">12 metri (24 MHz)</option>
-                            <option value="15">15 metri (21 MHz)</option>
-                            <option value="17">17 metri (18 MHz)</option>
-                            <option value="20">20 metri (14 MHz)</option>
-                            <option value="30">30 metri (10 MHz)</option>
-                            <option value="40">40 metri (7 MHz)</option>
-                            <option value="60">60 metri (5.3 MHz)</option>
-                            <option value="80">80 metri (3.5 MHz)</option>
-                            <option value="160">160 metri (1.8 MHz)</option>
-                            <option value="2">2 metri (144 MHz)</option>
+                            <option value="6m">6 metri (50 MHz)</option>
+                            <option value="10m">10 metri (28 MHz)</option>
+                            <option value="12m">12 metri (24 MHz)</option>
+                            <option value="15m">15 metri (21 MHz)</option>
+                            <option value="17m">17 metri (18 MHz)</option>
+                            <option value="20m">20 metri (14 MHz)</option>
+                            <option value="30m">30 metri (10 MHz)</option>
+                            <option value="40m">40 metri (7 MHz)</option>
+                            <option value="60m">60 metri (5.3 MHz)</option>
+                            <option value="80m">80 metri (3.5 MHz)</option>
+                            <option value="160m">160 metri (1.8 MHz)</option>
+                            <option value="2m">2 metri (144 MHz)</option>
                         </select>
                     </div>
                     <div class="col">
@@ -222,7 +222,18 @@
                 const nowUtcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
 
                 data.forEach(spot => {
-                    // 1. RILEVAMENTO MODALITÀ ROBUSTO
+                    // parsing sicuro della frequenza numerica grezza inviata dal server
+                    let rawFreq = parseFloat(spot.frequency);
+                    if(isNaN(rawFreq)) return;
+
+                    // Se la frequenza arriva espressa in kHz (es. 14074000 o 14074), normalizziamola in MHz (es. 14.074)
+                    if (rawFreq > 100000) {
+                        rawFreq = rawFreq / 1000000.0;
+                    } else if (rawFreq > 1000) {
+                        rawFreq = rawFreq / 1000.0;
+                    }
+
+                    // 1. ASSEGNAZIONE MODI ROBUSTA (FT8, FT4, CW, SSB)
                     let modoRilevato = (spot.mode || "").toUpperCase().trim();
                     let sottoModo = (spot.submode || "").toUpperCase().trim();
                     let commenti = (spot.comments || "").toUpperCase();
@@ -231,30 +242,42 @@
                         modoRilevato = "FT4";
                     } else if (sottoModo === "FT8" || commenti.includes("FT8")) {
                         modoRilevato = "FT8";
-                    } else if (modoRilevato === "PHONE" || modoRilevato === "SSB" || commenti.includes("SSB")) {
+                    } else if (modoRilevato === "PHONE" || modoRilevato === "SSB" || commenti.includes("SSB") || commenti.includes("LSB") || commenti.includes("USB")) {
                         modoRilevato = "SSB";
+                    } else if (modoRilevato === "CW" || commenti.includes("CW")) {
+                        modoRilevato = "CW";
                     }
 
                     if(!modoRilevato || modoRilevato === "DATA" || modoRilevato === "DIGITAL") {
                         modoRilevato = "DATA";
                     }
 
-                    // 2. LOGICA FILTRO BANDE CORRETTA (POTA usa stringhe numeriche pulite come "20", "40")
-                    let bandaSpot = (spot.band || "").toLowerCase().replace("m", "").trim(); 
-                    if(filtBand !== "all" && bandaSpot !== filtBand) {
-                        return;
+                    // 2. FILTRAGGIO BANDE MATEMATICO (Infallibile: non dipende più dalle stringhe di POTA)
+                    if(filtBand !== "all") {
+                        if(filtBand === "6m" && (rawFreq < 50.0 || rawFreq > 54.0)) return;
+                        if(filtBand === "10m" && (rawFreq < 28.0 || rawFreq > 29.7)) return;
+                        if(filtBand === "12m" && (rawFreq < 24.89 || rawFreq > 24.99)) return;
+                        if(filtBand === "15m" && (rawFreq < 21.0 || rawFreq > 21.45)) return;
+                        if(filtBand === "17m" && (rawFreq < 18.068 || rawFreq > 18.168)) return;
+                        if(filtBand === "20m" && (rawFreq < 14.0 || rawFreq > 14.35)) return; // Seleziona da 14.000 a 14.350 MHz
+                        if(filtBand === "30m" && (rawFreq < 10.1 || rawFreq > 10.15)) return;
+                        if(filtBand === "40m" && (rawFreq < 7.0 || rawFreq > 7.3)) return;   // Seleziona da 7.000 a 7.300 MHz
+                        if(filtBand === "60m" && (rawFreq < 5.06 || rawFreq > 5.45)) return;
+                        if(filtBand === "80m" && (rawFreq < 3.5 || rawFreq > 3.8)) return;
+                        if(filtBand === "160m" && (rawFreq < 1.8 || rawFreq > 2.0)) return;
+                        if(filtBand === "2m" && (rawFreq < 144.0 || rawFreq > 148.0)) return;
                     }
                     
                     // Filtraggio per Modalità
                     if(filtMode !== "all") {
-                        if(filtMode === "SSB" && modoRilevato !== "SSB" && modoRilevato !== "PHONE") return;
+                        if(filtMode === "SSB" && modoRilevato !== "SSB") return;
                         if(filtMode !== "SSB" && modoRilevato !== filtMode) return;
                     }
 
                     count++;
                     if(count > 35) return;
 
-                    // Calcolo Orario
+                    // Calcolo Orario Relativo
                     let timeStr = "Attivo";
                     if(spot.spotTime) {
                         const spotDate = new Date(spot.spotTime);
@@ -273,9 +296,7 @@
                         }
                     }
 
-                    const freq = parseFloat(spot.frequency);
-                    const displayFreq = freq > 1000 ? freq / 1000.0 : freq;
-                    const freqMhz = displayFreq.toFixed(3);
+                    const freqMhz = rawFreq.toFixed(3);
 
                     let badgeClass = modoRilevato;
                     if(badgeClass !== "FT8" && badgeClass !== "FT4" && badgeClass !== "CW" && badgeClass !== "SSB") {
