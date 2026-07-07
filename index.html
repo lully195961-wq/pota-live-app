@@ -90,11 +90,16 @@
 <script>
     let cachedSpots = [];
 
-    // Logica super semplificata: calcola i minuti passati senza rischiare crash di fuso orario
     function formatRelativeTime(dateString) {
         if (!dateString) return "--";
         try {
-            const spotDate = Date.parse(dateString);
+            // TRUCCO: Se la stringa non finisce già con 'Z', la aggiungiamo per forzare il browser a leggerla come UTC pura
+            let cleanString = dateString.trim();
+            if (!cleanString.endsWith('Z')) {
+                cleanString += 'Z';
+            }
+            
+            const spotDate = Date.parse(cleanString);
             const now = Date.now();
             if (isNaN(spotDate)) return "--";
 
@@ -141,72 +146,4 @@
         const band = document.getElementById('bandFilter').value;
         const mode = document.getElementById('modeFilter').value;
         const tbody = document.querySelector('#spotsTable tbody');
-        tbody.innerHTML = '';
-
-        if (!Array.isArray(cachedSpots) || cachedSpots.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessuno spot attivo al momento.</td></tr>';
-            return;
-        }
-
-        cachedSpots.forEach(s => {
-            if (!s.frequency) return;
-            const freqFloat = parseFloat(s.frequency);
-            
-            let matchBand = (band === 'All' || Math.floor(freqFloat) === parseInt(band));
-            const sMode = s.mode ? String(s.mode).toUpperCase().trim() : '';
-            let matchMode = (mode === 'All' || sMode === mode.toUpperCase());
-            
-            if (matchBand && matchMode) {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${formatRelativeTime(s.spotTime)}</td>
-                    <td><strong>${s.activator || ''}</strong></td>
-                    <td>${freqFloat.toFixed(3)} MHz</td>
-                    <td>${getModeBadge(s.mode)}</td>
-                    <td>${s.reference || ''}</td>
-                `;
-                tbody.appendChild(row);
-            }
-        });
-        
-        if(tbody.innerHTML === '') {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessun risultato per i filtri selezionati.</td></tr>';
-        }
-    }
-
-    async function sendSpot() {
-        const msg = document.getElementById('message');
-        const data = {
-            activator: document.getElementById('activator').value,
-            frequency: document.getElementById('frequency').value,
-            mode: document.getElementById('mode').value,
-            reference: document.getElementById('reference').value,
-            comments: document.getElementById('comments').value
-        };
-        msg.innerText = "Invio in corso...";
-        msg.style.color = "#3498db";
-
-        try {
-            const response = await fetch('/api/spot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const res = await response.json();
-            if (res.success) {
-                msg.innerText = "✓ Spot Inviato!";
-                msg.style.color = "green";
-                setTimeout(loadSpots, 1500);
-            } else {
-                msg.innerText = "✗ " + res.message;
-                msg.style.color = "red";
-            }
-        } catch(e) {
-            msg.innerText = "✗ Errore di connessione.";
-            msg.style.color = "red";
-        }
-    }
-
-    loadSpots();
-    setInterval(loadSpots, 30000);
-</script>
+        tbody.
