@@ -14,7 +14,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# CREDENZIALI POTA
 POTA_USERNAME = "ik6lmb@libero.it"
 POTA_PASSWORD = "Marilin1!"
 
@@ -23,28 +22,25 @@ async def get_pota_spots():
     url = "https://api.pota.app/spot"
     async with httpx.AsyncClient() as client:
         try:
-            # SBLOCCO DEL FLUSSO: Simuliamo un browser reale per evitare il blocco automatico di POTA
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
                 "Accept": "application/json"
             }
             response = await client.get(url, headers=headers, timeout=10)
-            if response.status_code == 200:
-                return response.json()
-            return []
-        except Exception:
-            return []
+            
+            # Se il server POTA risponde con un errore, lo mandiamo al frontend per vederlo
+            if response.status_code != 200:
+                return {"error": f"Errore Server POTA (Codice {response.status_code})"}
+                
+            return response.json()
+        except Exception as e:
+            return {"error": f"Errore di connessione Python: {str(e)}"}
 
 @app.post("/api/spot")
 async def send_pota_spot(request: Request):
     data = await request.json()
-    
     login_url = "https://api.pota.app/auth/login"
-    login_payload = {
-        "username": POTA_USERNAME, 
-        "password": POTA_PASSWORD
-    }
-    
+    login_payload = {"username": POTA_USERNAME, "password": POTA_PASSWORD}
     headers_login = {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -54,15 +50,14 @@ async def send_pota_spot(request: Request):
     async with httpx.AsyncClient() as client:
         try:
             login_response = await client.post(login_url, json=login_payload, headers=headers_login)
-            
             if login_response.status_code != 200:
-                return {"success": False, "message": f"Login fallito (Codice {login_response.status_code}): {login_response.text}"}
+                return {"success": False, "message": f"Login fallito: {login_response.status_code}"}
                 
             token_data = login_response.json()
             pota_jwt_token = token_data.get("token")
             
             if not pota_jwt_token:
-                return {"success": False, "message": "Token non trovato nella risposta di login di POTA."}
+                return {"success": False, "message": "Token non trovato."}
             
             activator = data.get("activator", "").upper().strip()
             spotter = data.get("spotter", "").upper().strip()
@@ -92,13 +87,12 @@ async def send_pota_spot(request: Request):
             response = await client.post(spot_url, json=pota_payload, headers=headers_spot)
             if response.status_code in [200, 201]:
                 return {"success": True, "message": "Spot inviato!"}
-            return {"success": False, "message": f"Errore POTA {response.status_code}: {response.text}"}
-            
+            return {"success": False, "message": f"Errore {response.status_code}"}
         except Exception as e:
-            return {"success": False, "message": f"Errore di connessione: {str(e)}"}
+            return {"success": False, "message": str(e)}
 
 @app.get("/")
 def read_root():
     if os.path.exists("index.html"):
         return FileResponse("index.html")
-    return HTMLResponse("<h1>File index.html non trovato nel server</h1>")
+    return HTMLResponse("<h1>File index.html non trovato</h1>")
