@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POTA Auto-Spotter</title>
+    <!-- Collegamento per l'installazione su Cellulare -->
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <style>
@@ -19,6 +20,7 @@
 
 <div class="container-fluid">
     <div class="row">
+        <!-- FORM DI INVIO -->
         <div class="col-md-3">
             <div class="card p-4">
                 <h3 class="text-center mb-4">Invia Auto-Spot</h3>
@@ -62,6 +64,7 @@
             </div>
         </div>
 
+        <!-- TABELLA ATTIVITÀ -->
         <div class="col-md-9">
             <div class="table-container">
                 <h3 class="text-center mb-4">Attività POTA Live</h3>
@@ -102,7 +105,7 @@
 </div>
 
 <script>
-    const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN2hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImY5MTA3YmIxLTBlOWQtNGMxNi1iNTg1LWMzMjNlZmVlZjU2NSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM0MjUzOTcsImV4cCI6MTt4MzQyODk5NywiaWF0IjoxNzgzNDI1Mzk3LCJqdGkiOiJiOTNhMGM5ZC0zNDUwLTQ2YjUtYmEzYi01MjU2ZjljMWVkMmUiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.Hc1ZIbWyHhQmjp1N_Tar0oZ1b46FG8u1XGm7PNoGcjL03dRe95qrzxtnhPWM6Iasl_qpdbo67pmauogI20LHVxlhOvfZet6QSxNAf13su3Zkxk7_829QZBE2hmg5ngJDWUhDueOi1KfMzJhuIHlF0uA5ju14TEDzq7FDcPwTXcqgFXXkz1X84RnvMIW_0vtsi_qJtOkGe04rZJ8JrT5kRhYpbP0B5V02Bzvp2GXJI-4gcch4kclwLsBtAq4rtc7_7klTsM7Ukx96se9Dbo3EmwW42eaFQ__H1mT0xhIxX9jwDu4G4MUmXf582i6Zzs0mrBvt1DLRh2yQMW2WlBsO7A";
+    const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN2hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImY5MTA3YmIxLTBlOWQtNGMxNi1iNTg1LWMzMjNlZmVlZjU2NSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM0MjUzOTcsImV4cCI6MTczMzQyODk5NywiaWF0IjoxNzgzNDI1Mzk3LCJqdGkiOiJiOTNhMGM5ZC0zNDUwLTQ2YjUtYmEzYi01MjU2ZjljMWVkMmUiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.Hc1ZIbWyHhQmjp1N_Tar0oZ1b46FG8u1XGm7PNoGcjL03dRe95qrzxtnhPWM6Iasl_qpdbo67pmauogI20LHVxlhOvfZet6QSxNAf13su3Zkxk7_829QZBE2hmg5ngJDWUhDueOi1KfMzJhuIHlF0uA5ju14TEDzq7FDcPwTXcqgFXXkz1X84RnvMIW_0vtsi_qJtOkGe04rZJ8JrT5kRhYpbP0B5V02Bzvp2GXJI-4gcch4kclwLsBtAq4rtc7_7klTsM7Ukx96se9Dbo3EmwW42eaFQ__H1mT0xhIxX9jwDu4G4MUmXf582i6Zzs0mrBvt1DLRh2yQMW2WlBsO7A";
 
     function inviaSpot() {
         const btn = document.getElementById('btnInvia');
@@ -175,7 +178,10 @@
                 
                 tableBody.innerHTML = "";
                 let count = 0;
+
+                // Calcolo millisecondi attuali in formato UTC puro
                 const now = new Date();
+                const nowUtcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
 
                 data.forEach(spot => {
                     const freq = parseFloat(spot.frequency);
@@ -187,22 +193,26 @@
                     count++;
                     if(count > 40) return;
 
-                    // Calcolo del tempo trascorso relativo (es. 2m fa)
+                    // Calcolo del tempo trascorso relativo senza discrepanze di fuso orario
                     let timeStr = "Attivo";
                     if(spot.spotTime) {
                         const spotDate = new Date(spot.spotTime);
-                        const diffMs = now - spotDate;
+                        const diffMs = nowUtcMs - spotDate.getTime();
                         const diffMins = Math.floor(diffMs / 60000);
                         const diffSecs = Math.floor(diffMs / 1000);
 
                         if (diffMins < 1) {
                             timeStr = diffSecs <= 10 ? "Ora" : `${diffSecs}s fa`;
+                        } else if (diffMins >= 60) {
+                            const diffHours = Math.floor(diffMins / 60);
+                            const remMins = diffMins % 60;
+                            timeStr = remMins > 0 ? `${diffHours}h ${remMins}m fa` : `${diffHours}h fa`;
                         } else {
                             timeStr = `${diffMins}m fa`;
                         }
                     }
 
-                    // Formattazione pulita in MHz (es. 7.074 MHz)
+                    // Frequenza pulita (es. 14.074 MHz)
                     const freqMhz = freq.toFixed(3);
 
                     const row = `<tr>
@@ -222,7 +232,7 @@
             .catch(err => {
                 tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Errore caricamento dati</td></tr>`;
             });
-}
+    }
 
     loadSpots();
     setInterval(loadSpots, 30000);
