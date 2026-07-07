@@ -73,7 +73,7 @@
         <table id="spotsTable">
             <thead>
                 <tr>
-                    <th>Ora (UTC)</th>
+                    <th>Tempo trascorso</th>
                     <th>Attivatore</th>
                     <th>Frequenza</th>
                     <th>Modo</th>
@@ -90,12 +90,25 @@
 <script>
     let cachedSpots = [];
 
-    function formatTime(dateString) {
-        if (!dateString) return "--:-- UTC";
+    // Funzione per calcolare il tempo relativo trascorso (es. 45s fa, 3m fa)
+    function formatRelativeTime(dateString) {
+        if (!dateString) return "--";
         try {
-            const d = new Date(dateString);
-            return String(d.getUTCHours()).padStart(2, '0') + ":" + String(d.getUTCMinutes()).padStart(2, '0') + " UTC";
-        } catch(e) { return "--:-- UTC"; }
+            const spotDate = new Date(dateString);
+            const now = new Date();
+            const diffInSeconds = Math.floor((now.getTime() - spotDate.getTime()) / 1000);
+
+            if (diffInSeconds < 0 || isNaN(diffInSeconds)) return "Adesso";
+            if (diffInSeconds < 60) return diffInSeconds + "s fa";
+            
+            const diffInMinutes = Math.floor(diffInSeconds / 60);
+            if (diffInMinutes < 60) return diffInMinutes + "m fa";
+            
+            const diffInHours = Math.floor(diffInMinutes / 60);
+            return diffInHours + "h fa";
+        } catch(e) { 
+            return "--"; 
+        }
     }
 
     function getModeBadge(mode) {
@@ -113,7 +126,6 @@
             const response = await fetch('/api/spots');
             const data = await response.json();
             
-            // Se il backend ha restituito un errore strutturato, lo mostriamo esplicitamente
             if (data && data.error) {
                 tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ ${data.error}</td></tr>`;
                 return;
@@ -148,7 +160,7 @@
             if (matchBand && matchMode) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${formatTime(s.spotTime)}</td>
+                    <td>${formatRelativeTime(s.spotTime)}</td>
                     <td><strong>${s.activator || ''}</strong></td>
                     <td>${freqFloat.toFixed(3)} MHz</td>
                     <td>${getModeBadge(s.mode)}</td>
@@ -170,35 +182,4 @@
             frequency: document.getElementById('frequency').value,
             mode: document.getElementById('mode').value,
             reference: document.getElementById('reference').value,
-            comments: document.getElementById('comments').value
-        };
-        msg.innerText = "Invio in corso...";
-        msg.style.color = "#3498db";
-
-        try {
-            const response = await fetch('/api/spot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const res = await response.json();
-            if (res.success) {
-                msg.innerText = "✓ Spot Inviato!";
-                msg.style.color = "green";
-                setTimeout(loadSpots, 1500);
-            } else {
-                msg.innerText = "✗ " + res.message;
-                msg.style.color = "red";
-            }
-        } catch(e) {
-            msg.innerText = "✗ Errore di connessione.";
-            msg.style.color = "red";
-        }
-    }
-
-    loadSpots();
-    setInterval(loadSpots, 30000);
-</script>
-
-</body>
-</html>
+            comments: document
