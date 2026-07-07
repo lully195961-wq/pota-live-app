@@ -14,8 +14,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# IL TUO TOKEN ATTIVO INSERITO CON SUCCESSO
-POTA_ACCESS_TOKEN = "eyJraWQiOiJORmJaeHMyTE5uS3ZUVGlUTC9IaFlLUGJCVlBmMUdaeERKWUxIUXJ5RHJzPSIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoianE0eThEaFFpazJNUV9LUWhRTGx2QSIsInN1YiI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiIsInBvdGE6ZW1haWwiOiJpazZsbWJAbGliZXJvLml0IiwicG90YTpncm91cHMiOiIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzcyI6Imh0dHBzOi8vY29nbml0by1pZHAudXMtZWFzdC0yLmFtYXpvbmF3cy5jb20vdXMtZWFzdC0yX25BNWpaMGtsaCIsImNvZ25pdG86dXNlcm5hbWUiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJhdWQiOiI3aGx1cWN0MG4ybmNraWI3aTdzZDU3NTNvYSIsImV2ZW50X2lkIjoiYTFkZGFkYjMtY2JkNC00Zjg1LWI2YjEtMzIwYzhkZGQyYTc0IiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE3ODM0MjQxOTIsInBvdGE6ZnVsbG5hbWUiOiJNYXNzaW1vIENhbXBhbmluaSIsInBvdGE6aWQiOiI2NjA4MSIsInBvdGE6Y2FsbHNpZ24iOiJJSzZMTUIiLCJleHAiOjE3ODM0Mjc3OTIsImlhdCI6MTc4MzQyNDE5MiwiZW1haWwiOiJpazZsbWJAbGliZXJvLml0In0.Tq38TVHTfP62CQe5LHf6_f-zpBDI8137G0y4VDaK4WsucnoqbBnyk2iDvTltvFGbGiLhFJLGwv6A2JwLHz4TJRm92dLVx5u9xNGJmg7KKds613H7ykJU4gewI2v7JCdP05XQquc50Wlkg82Uw9Sueu6XRtI_43BED_nERk0plC9zZgSmzJHhPUKsjx_FYNIVVAyMyTjK0RzrrQRPhr6pfjhHEMLA69PPVrwSgDkyYnmBH5jkxfvlJtONxJK_2WdRu7UvLUj-SmVJtyj8XNT27URXiKcy_ybTrupwK21YKD4Gj6nioUhU2eR7f9CSuddSTFbSa0sbaX_PzsyYeE2U3Q"
+# IL TUO NUOVO ACCESS TOKEN INSERITO CON SUCCESSO
+POTA_ACCESS_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN2hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImY5MTA3YmIxLTBlOWQtNGMxNi1iNTg1LWMzMjNlZmVlZjU2NSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM0MjUzOTcsImV4cCI6MTc4MzQyODk5NywiaWF0IjoxNzgzNDI1Mzk3LCJqdGkiOiJiOTNhMGM5ZC0zNDUwLTQ2YjUtYmEzYi01MjU2ZjljMWVkMmUiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.Hc1ZIbWyHhQmjp1N_Tar0oZ1b46FG8u1XGm7PNoGcjL03dRe95qrzxtnhPWM6Iasl_qpdbo67pmauogI20LHVxlhOvfZet6QSxNAf13su3Zkxk7_829QZBE2hmg5ngJDWUhDueOi1KfMzJhuIHlF0uA5ju14TEDzq7FDcPwTXcqgFXXkz1X84RnvMIW_0vtsi_qJtOkGe04rZJ8JrT5kRhYpbP0B5V02Bzvp2GXJI-4gcch4kclwLsBtAq4rtc7_7klTsM7Ukx96se9Dbo3EmwW42eaFQ__H1mT0xhIxX9jwDu4G4MUmXf582i6Zzs0mrBvt1DLRh2yQMW2WlBsO7A"
 
 @app.get("/api/spots")
 async def get_pota_spots():
@@ -63,14 +63,20 @@ async def send_pota_spot(request: Request):
             headers_spot = {
                 "Authorization": f"Bearer {POTA_ACCESS_TOKEN}", 
                 "Content-Type": "application/json",
-                "Accept": "application/json, text/plain, */*",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                "Accept": "application/json, text/plain, */*"
             }
             
             response = await client.post(spot_url, json=pota_payload, headers=headers_spot)
             if response.status_code in [200, 201]:
-                return {"success": True, "message": "Spot inviato!"}
-            return {"success": False, "message": f"Errore server POTA: {response.status_code}"}
+                return {"success": True, "message": "Spot inviato con successo!"}
+            
+            try:
+                err_detail = response.json()
+                msg = err_detail.get("message", f"Codice {response.status_code}")
+            except:
+                msg = f"Codice {response.status_code}"
+                
+            return {"success": False, "message": f"Rifiutato da POTA: {msg}"}
         except Exception as e:
             return {"success": False, "message": str(e)}
 
