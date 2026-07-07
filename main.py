@@ -57,6 +57,13 @@ async def proxy_pota_spot(request: Request):
         except Exception as e:
             return Response(content=f'{{"success": false, "message": "{str(e)}"}}', status_code=500, headers={"Content-Type": "application/json"})
 
+# ROTTA AGGIUNTA: Invia l'immagine icon.png al cellulare
+@app.get("/icon.png")
+def get_icon():
+    if os.path.exists("icon.png"):
+        return FileResponse("icon.png", media_type="image/png")
+    return Response(content='{"error": "Icona non trovata"}', status_code=404, media_type="application/json")
+
 @app.get("/manifest.json")
 def get_manifest():
     if os.path.exists("manifest.json"):
