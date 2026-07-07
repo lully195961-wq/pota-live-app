@@ -18,13 +18,12 @@ app.add_middleware(
 POTA_USERNAME = "ik6lmb@libero.it"
 POTA_PASSWORD = "Marilin1!"
 
-# --- AGGIUSTATA QUESTA FUNZIONE: ORA IL FLUSSO FUNZIONA DI NUOVO ---
 @app.get("/api/spots")
 async def get_pota_spots():
     url = "https://api.pota.app/spot"
     async with httpx.AsyncClient() as client:
         try:
-            # Aggiungiamo gli headers per simulare un browser reale ed evitare il blocco automatico
+            # SBLOCCO DEL FLUSSO: Simuliamo un browser reale per evitare il blocco automatico di POTA
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 "Accept": "application/json"
@@ -48,7 +47,8 @@ async def send_pota_spot(request: Request):
     
     headers_login = {
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     }
     
     async with httpx.AsyncClient() as client:
@@ -85,7 +85,8 @@ async def send_pota_spot(request: Request):
             headers_spot = {
                 "Authorization": f"Bearer {pota_jwt_token}", 
                 "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
             }
             
             response = await client.post(spot_url, json=pota_payload, headers=headers_spot)
