@@ -16,13 +16,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- LETTURA SPOT (Funzionante) ---
+# --- QUESTA PARTE RIPRISTINA LA TABELLA A DESTRA ---
 @app.get("/api/spots")
 async def get_pota_spots():
     url = "https://api.pota.app/spot"
     async with httpx.AsyncClient() as client:
         try:
-            # Emulazione header browser per evitare blocchi
+            # Header necessario per non essere bloccati da POTA
             headers = {"User-Agent": "Mozilla/5.0"}
             response = await client.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
@@ -31,7 +31,7 @@ async def get_pota_spots():
         except Exception:
             return []
 
-# --- INVIO SPOT (Via Cluster, Niente Login POTA) ---
+# --- QUESTA PARTE GESTISCE L'INVIO VIA CLUSTER ---
 @app.post("/api/spot")
 async def send_pota_spot(request: Request):
     data = await request.json()
@@ -39,7 +39,7 @@ async def send_pota_spot(request: Request):
     reference = data.get("reference", "").upper().strip()
     mode = data.get("mode", "").upper().strip()
     comments = data.get("comments", "").strip()
-    spotter = "IK6LMB" # Il tuo nominativo
+    spotter = "IK6LMB"
     
     try:
         freq_khz = float(data.get("frequency", 0))
@@ -47,12 +47,11 @@ async def send_pota_spot(request: Request):
     except:
         return {"success": False, "message": "Frequenza non valida."}
 
-    # Sintassi universale DX Cluster
+    # Comando per il cluster
     comment_string = f"POTA-{reference} {mode} {comments}".strip()
     cluster_command = f"DX {freq_mhz:.3f} {activator} {comment_string}\r\n"
 
     try:
-        # Connessione al cluster italiano ik4icz
         reader, writer = await telnetlib3.open_connection('ik4icz.dyndns.org', 8000)
         await reader.readuntil(b'login:')
         writer.write(f"{spotter}\r\n")
@@ -60,9 +59,9 @@ async def send_pota_spot(request: Request):
         writer.write(cluster_command)
         await writer.drain()
         writer.close()
-        return {"success": True, "message": "Spot inviato al Cluster! Apparirà tra poco su POTA."}
+        return {"success": True, "message": "Spot inviato correttamente!"}
     except Exception as e:
-        return {"success": False, "message": f"Errore cluster: {str(e)}"}
+        return {"success": False, "message": f"Errore: {str(e)}"}
 
 @app.get("/")
 def read_root():
