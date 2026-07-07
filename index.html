@@ -145,7 +145,8 @@
 </div>
 
 <script>
-    const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN7hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImY5MTA3YmIxLTBlOWQtNGMxNi1iNTg1LWMzMjNlZmVlZjU2NSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM0MjUzOTcsImV4cCI6MTczMzQyODk5NywiaWF0IjoxNzgzNDI1Mzk3LCJqdGkiOiJiOTNhMGM5ZC0zNDUwLTQ2YjUtYmEzYi01MjU2ZjljMWVkMmUiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.Hc1ZIbWyHhQmjp1N_Tar0oZ1b46FG8u1XGm7PNoGcjL03dRe95qrzxtnhPWM6Iasl_qpdbo67pmauogI20LHVxlhOvfZet6QSxNAf13su3Zkxk7_829QZBE2hmg5ngJDWUhDueOi1KfMzJhuIHlF0uA5ju14TEDzq7FDcPwTXcqgFXXkz1X84RnvMIW_0vtsi_qJtOkGe04rZJ8JrT5kRhYpbP0B5V02Bzvp2GXJI-4gcch4kclwLsBtAq4rtc7_7klTsM7Ukx96se9Dbo3EmwW42eaFQ__H1mT0xhIxX9jwDu4G4MUmXf582i6Zzs0mrBvt1DLRh2yQMW2WlBsO7A";
+    // TOKEN AGGIORNATO E RIPRISTINATO NEL CODICE FRONT-END
+    const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN7hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImQ2NzE5MTU0LTc5OWQtNDdmMC1hYTEwLWRhYzQ5MmZlYzViOCIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM4NTM4MDIsImV4cCI6MTc4Mzg1NzQwMiwiaWF0IjoxNzgzNDUzODAyLCJqdGkiOiIwY2ZlNGYyZi0yNTNmLTQ5MWItOTJhMy0yM2U5NDNkMDU1MmEiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.TcczyVRYl4Qcb9EMR-AyFN8u5mvAjrmHHst438mk2rcHQxoHgDNiH6uYPI-mhJwGdoSD30jkM65KnolFvN9QmM620HrVP6iKV-EcS2-6gWBZnTiAXThJpGvYh-gbZ4iQbs5_DXhiH_BnwIFaDt_UqMJrh7FTPteh8UYTgyjnAicLP6z7bxFrb7cjfuPtfxXiWp3ftfLZWTNPQ3C8vzfpvAcEmuYEzzJqrHLrnZfJ3kNEY39zoGr2qJVjRd5zqKlSHEN1fypZ82Vp4O8urI5kKhBg4rSht1f7rckB7ejGtekHt3qtygXcu68PoqrVHw0gz5GjtOb8WITpfuD28S7jZg";
 
     function inviaSpot() {
         const btn = document.getElementById('btnInvia');
@@ -222,18 +223,16 @@
                 const nowUtcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
 
                 data.forEach(spot => {
-                    // parsing sicuro della frequenza numerica grezza inviata dal server
                     let rawFreq = parseFloat(spot.frequency);
                     if(isNaN(rawFreq)) return;
 
-                    // Se la frequenza arriva espressa in kHz (es. 14074000 o 14074), normalizziamola in MHz (es. 14.074)
                     if (rawFreq > 100000) {
                         rawFreq = rawFreq / 1000000.0;
                     } else if (rawFreq > 1000) {
                         rawFreq = rawFreq / 1000.0;
                     }
 
-                    // 1. ASSEGNAZIONE MODI ROBUSTA (FT8, FT4, CW, SSB)
+                    // Assegnazione Modi
                     let modoRilevato = (spot.mode || "").toUpperCase().trim();
                     let sottoModo = (spot.submode || "").toUpperCase().trim();
                     let commenti = (spot.comments || "").toUpperCase();
@@ -252,23 +251,22 @@
                         modoRilevato = "DATA";
                     }
 
-                    // 2. FILTRAGGIO BANDE MATEMATICO (Infallibile: non dipende più dalle stringhe di POTA)
+                    // Filtraggio Bande Matematico
                     if(filtBand !== "all") {
                         if(filtBand === "6m" && (rawFreq < 50.0 || rawFreq > 54.0)) return;
                         if(filtBand === "10m" && (rawFreq < 28.0 || rawFreq > 29.7)) return;
                         if(filtBand === "12m" && (rawFreq < 24.89 || rawFreq > 24.99)) return;
                         if(filtBand === "15m" && (rawFreq < 21.0 || rawFreq > 21.45)) return;
                         if(filtBand === "17m" && (rawFreq < 18.068 || rawFreq > 18.168)) return;
-                        if(filtBand === "20m" && (rawFreq < 14.0 || rawFreq > 14.35)) return; // Seleziona da 14.000 a 14.350 MHz
+                        if(filtBand === "20m" && (rawFreq < 14.0 || rawFreq > 14.35)) return;
                         if(filtBand === "30m" && (rawFreq < 10.1 || rawFreq > 10.15)) return;
-                        if(filtBand === "40m" && (rawFreq < 7.0 || rawFreq > 7.3)) return;   // Seleziona da 7.000 a 7.300 MHz
+                        if(filtBand === "40m" && (rawFreq < 7.0 || rawFreq > 7.3)) return;
                         if(filtBand === "60m" && (rawFreq < 5.06 || rawFreq > 5.45)) return;
                         if(filtBand === "80m" && (rawFreq < 3.5 || rawFreq > 3.8)) return;
                         if(filtBand === "160m" && (rawFreq < 1.8 || rawFreq > 2.0)) return;
                         if(filtBand === "2m" && (rawFreq < 144.0 || rawFreq > 148.0)) return;
                     }
                     
-                    // Filtraggio per Modalità
                     if(filtMode !== "all") {
                         if(filtMode === "SSB" && modoRilevato !== "SSB") return;
                         if(filtMode !== "SSB" && modoRilevato !== filtMode) return;
@@ -277,7 +275,6 @@
                     count++;
                     if(count > 35) return;
 
-                    // Calcolo Orario Relativo
                     let timeStr = "Attivo";
                     if(spot.spotTime) {
                         const spotDate = new Date(spot.spotTime);
