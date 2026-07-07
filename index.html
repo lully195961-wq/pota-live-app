@@ -17,8 +17,13 @@
         .table-container { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         th { background-color: #3498db !important; color: white !important; font-size: 14px; padding: 8px 4px !important; }
         td { font-size: 13px; padding: 8px 4px !important; vertical-align: middle; }
-        .badge-mode { font-weight: bold; padding: 3px 6px; border-radius: 4px; color: white; font-size: 11px; }
-        .FT8 { background-color: #e74c3c; } .CW { background-color: #d35400; } .SSB { background-color: #2980b9; }
+        .badge-mode { font-weight: bold; padding: 3px 6px; border-radius: 4px; color: white; font-size: 11px; text-transform: uppercase; }
+        /* Colori per i Modi principali e digitali */
+        .FT8 { background-color: #e74c3c; } 
+        .FT4 { background-color: #9b59b6; }
+        .CW { background-color: #d35400; } 
+        .SSB, .PHONE { background-color: #2980b9; }
+        .DATA, .DIGITAL { background-color: #7f8c8d; }
         h3 { font-size: 1.3rem; margin-bottom: 15px !important; }
         .mb-3 { margin-bottom: 0.7rem !important; }
         .form-label { margin-bottom: 0.2rem; font-size: 13px; font-weight: bold; }
@@ -59,6 +64,7 @@
                     <label class="form-label">Modo:</label>
                     <select id="mode" class="form-select">
                         <option value="FT8">FT8</option>
+                        <option value="FT4">FT4</option>
                         <option value="CW">CW</option>
                         <option value="SSB">SSB</option>
                     </select>
@@ -109,8 +115,9 @@
                         <select id="filterMode" class="form-select form-select-sm" onchange="loadSpots()">
                             <option value="all">Tutti i modi</option>
                             <option value="FT8">FT8</option>
+                            <option value="FT4">FT4</option>
                             <option value="CW">CW</option>
-                            <option value="SSB">SSB</option>
+                            <option value="SSB">SSB / PHONE</option>
                         </select>
                     </div>
                 </div>
@@ -136,7 +143,7 @@
 </div>
 
 <script>
-    const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2cognRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN7hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImY5MTA3YmIxLTBlOWQtNGMxNi1iNTg1LWMzMjNlZmVlZjU2NSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM0MjUzOTcsImV4cCI6MTczMzQyODk5NywiaWF0IjoxNzgzNDI1Mzk3LCJqdGkiOiJiOTNhMGM5ZC0zNDUwLTQ2YjUtYmEzYi01MjU2ZjljMWVkMmUiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.Hc1ZIbWyHhQmjp1N_Tar0oZ1b46FG8u1XGm7PNoGcjL03dRe95qrzxtnhPWM6Iasl_qpdbo67pmauogI20LHVxlhOvfZet6QSxNAf13su3Zkxk7_829QZBE2hmg5ngJDWUhDueOi1KfMzJhuIHlF0uA5ju14TEDzq7FDcPwTXcqgFXXkz1X84RnvMIW_0vtsi_qJtOkGe04rZJ8JrT5kRhYpbP0B5V02Bzvp2GXJI-4gcch4kclwLsBtAq4rtc7_7klTsM7Ukx96se9Dbo3EmwW42eaFQ__H1mT0xhIxX9jwDu4G4MUmXf582i6Zzs0mrBvt1DLRh2yQMW2WlBsO7A";
+    const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN7hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImY5MTA3YmIxLTBlOWQtNGMxNi1iNTg1LWMzMjNlZmVlZjU2NSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM0MjUzOTcsImV4cCI6MTczMzQyODk5NywiaWF0IjoxNzgzNDI1Mzk3LCJqdGkiOiJiOTNhMGM5ZC0zNDUwLTQ2YjUtYmEzYi01MjU2ZjljMWVkMmUiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.Hc1ZIbWyHhQmjp1N_Tar0oZ1b46FG8u1XGm7PNoGcjL03dRe95qrzxtnhPWM6Iasl_qpdbo67pmauogI20LHVxlhOvfZet6QSxNAf13su3Zkxk7_829QZBE2hmg5ngJDWUhDueOi1KfMzJhuIHlF0uA5ju14TEDzq7FDcPwTXcqgFXXkz1X84RnvMIW_0vtsi_qJtOkGe04rZJ8JrT5kRhYpbP0B5V02Bzvp2GXJI-4gcch4kclwLsBtAq4rtc7_7klTsM7Ukx96se9Dbo3EmwW42eaFQ__H1mT0xhIxX9jwDu4G4MUmXf582i6Zzs0mrBvt1DLRh2yQMW2WlBsO7A";
 
     function inviaSpot() {
         const btn = document.getElementById('btnInvia');
@@ -213,29 +220,45 @@
                 const nowUtcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
 
                 data.forEach(spot => {
-                    const freq = parseFloat(spot.frequency);
+                    // 1. CODIFICA SICURA DEI MODI (Evita celle vuote per FT4, SSB, ecc.)
+                    let modoRilevato = (spot.mode || "").toUpperCase().trim();
+                    let sottoModo = (spot.submode || "").toUpperCase().trim();
                     
-                    // LOGICA FILTRAGGIO BANDE AGGIORNATA
-                    if(filtBand !== "all") {
-                        if(filtBand === "6m" && (freq < 50.0 || freq > 54.0)) return;
-                        if(filtBand === "10m" && (freq < 28.0 || freq > 29.7)) return;
-                        if(filtBand === "12m" && (freq < 24.89 || freq > 24.99)) return;
-                        if(filtBand === "15m" && (freq < 21.0 || freq > 21.45)) return;
-                        if(filtBand === "17m" && (freq < 18.068 || freq > 18.168)) return;
-                        if(filtBand === "20m" && (freq < 14.0 || freq > 14.35)) return;
-                        if(filtBand === "30m" && (freq < 10.1 || freq > 10.15)) return;
-                        if(filtBand === "40m" && (freq < 7.0 || freq > 7.3)) return;
-                        if(filtBand === "60m" && (freq < 5.06 || freq > 5.45)) return;
-                        if(filtBand === "80m" && (freq < 3.5 || freq > 3.8)) return;
-                        if(filtBand === "160m" && (freq < 1.8 || freq > 2.0)) return;
-                        if(filtBand === "2m" && (freq < 144.0 || freq > 148.0)) return;
+                    // Se c'è un sottomodo specifico (come FT4), usiamo quello come primario
+                    if(sottoModo) {
+                        modoRilevato = sottoModo;
                     }
                     
-                    if(filtMode !== "all" && spot.mode !== filtMode) return;
+                    // Se il modo è generico o vuoto, lo estrapoliamo in base alle stringhe standard
+                    if(!modoRilevato || modoRilevato === "DATA" || modoRilevato === "DIGITAL") {
+                        if(sottoModo === "FT4" || sottoModo === "FT8") {
+                            modoRilevato = sottoModo;
+                        } else if (spot.comments && spot.comments.toUpperCase().includes("FT4")) {
+                            modoRilevato = "FT4";
+                        } else if (spot.comments && spot.comments.toUpperCase().includes("FT8")) {
+                            modoRilevato = "FT8";
+                        }
+                    }
+                    
+                    if(modoRilevato === "PHONE") { modoRilevato = "SSB"; }
+                    if(!modoRilevato) { modoRilevato = "N/A"; }
+
+                    // 2. FILTRAGGIO BANDE SEMPLIFICATO BASATO SUL CAMPO .band DI POTA
+                    let bandaSpot = (spot.band || "").toLowerCase().trim(); // es: "20m", "40m"
+                    if(filtBand !== "all" && bandaSpot !== filtBand) {
+                        return;
+                    }
+                    
+                    // Filtraggio per Modalità
+                    if(filtMode !== "all") {
+                        if(filtMode === "SSB" && modoRilevato !== "SSB" && modoRilevato !== "PHONE") return;
+                        if(filtMode !== "SSB" && modoRilevato !== filtMode) return;
+                    }
 
                     count++;
                     if(count > 35) return;
 
+                    // Calcolo Orario Relativo
                     let timeStr = "Attivo";
                     if(spot.spotTime) {
                         const spotDate = new Date(spot.spotTime);
@@ -254,15 +277,21 @@
                         }
                     }
 
-                    // Se la frequenza è espressa in kHz totali (es. 7074000), la adegua in MHz
+                    const freq = parseFloat(spot.frequency);
                     const displayFreq = freq > 1000 ? freq / 1000.0 : freq;
                     const freqMhz = displayFreq.toFixed(3);
+
+                    // Gestione colore dinamico badge (se non è tra quelli standard diamo grigio)
+                    let badgeClass = modoRilevato;
+                    if(badgeClass !== "FT8" && badgeClass !== "FT4" && badgeClass !== "CW" && badgeClass !== "SSB") {
+                        badgeClass = "DATA"; 
+                    }
 
                     const row = `<tr>
                         <td>${timeStr}</td>
                         <td><strong>${spot.activator}</strong></td>
                         <td>${freqMhz} MHz</td>
-                        <td><span class="badge-mode ${spot.mode}">${spot.mode}</span></td>
+                        <td><span class="badge-mode ${badgeClass}">${modoRilevato}</span></td>
                         <td>${spot.reference}</td>
                     </tr>`;
                     tableBody.innerHTML += row;
