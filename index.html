@@ -64,4 +64,141 @@
             </select>
             <select id="modeFilter" onchange="displaySpots()">
                 <option value="All">Tutti i modi</option>
-                <option value="SSB">SS
+                <option value="SSB">SSB</option>
+                <option value="FT8">FT8</option>
+                <option value="CW">CW</option>
+            </select>
+        </div>
+        
+        <table id="spotsTable">
+            <thead>
+                <tr>
+                    <th>Ora (UTC)</th>
+                    <th>Attivatore</th>
+                    <th>Frequenza</th>
+                    <th>Modo</th>
+                    <th>Referenza</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="5" style="text-align:center;">Caricamento in corso...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let cachedSpots = [];
+
+    function formatTime(dateString) {
+        if (!dateString) return "--:-- UTC";
+        try {
+            const d = new Date(dateString);
+            return String(d.getUTCHours()).padStart(2, '0') + ":" + String(d.getUTCMinutes()).padStart(2, '0') + " UTC";
+        } catch(e) { return "--:-- UTC"; }
+    }
+
+    function getModeBadge(mode) {
+        if (!mode) return '';
+        const m = String(mode).toUpperCase().trim();
+        if (m === 'FT8' || m === 'FT4') return '<span class="badge badge-ft8">FT8</span>';
+        if (m === 'CW') return '<span class="badge badge-cw">CW</span>';
+        if (m === 'SSB') return '<span class="badge badge-ssb">SSB</span>';
+        return '<span class="badge">' + m + '</span>';
+    }
+
+    async function loadSpots() {
+        const tbody = document.querySelector('#spotsTable tbody');
+        try {
+            const response = await fetch('/api/spots');
+            const data = await response.json();
+            
+            // Se il backend ha restituito un errore strutturato, lo mostriamo esplicitamente
+            if (data && data.error) {
+                tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ ${data.error}</td></tr>`;
+                return;
+            }
+            
+            cachedSpots = data;
+            displaySpots();
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ Errore di connessione JavaScript: ${e.message}</td></tr>`;
+        }
+    }
+
+    function displaySpots() {
+        const band = document.getElementById('bandFilter').value;
+        const mode = document.getElementById('modeFilter').value;
+        const tbody = document.querySelector('#spotsTable tbody');
+        tbody.innerHTML = '';
+
+        if (!Array.isArray(cachedSpots) || cachedSpots.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessuno spot attivo al momento.</td></tr>';
+            return;
+        }
+
+        cachedSpots.forEach(s => {
+            if (!s.frequency) return;
+            const freqFloat = parseFloat(s.frequency);
+            
+            let matchBand = (band === 'All' || Math.floor(freqFloat) === parseInt(band));
+            const sMode = s.mode ? String(s.mode).toUpperCase().trim() : '';
+            let matchMode = (mode === 'All' || sMode === mode.toUpperCase());
+            
+            if (matchBand && matchMode) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatTime(s.spotTime)}</td>
+                    <td><strong>${s.activator || ''}</strong></td>
+                    <td>${freqFloat.toFixed(3)} MHz</td>
+                    <td>${getModeBadge(s.mode)}</td>
+                    <td>${s.reference || ''}</td>
+                `;
+                tbody.appendChild(row);
+            }
+        });
+        
+        if(tbody.innerHTML === '') {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessun risultato per i filtri selezionati.</td></tr>';
+        }
+    }
+
+    async function sendSpot() {
+        const msg = document.getElementById('message');
+        const data = {
+            activator: document.getElementById('activator').value,
+            frequency: document.getElementById('frequency').value,
+            mode: document.getElementById('mode').value,
+            reference: document.getElementById('reference').value,
+            comments: document.getElementById('comments').value
+        };
+        msg.innerText = "Invio in corso...";
+        msg.style.color = "#3498db";
+
+        try {
+            const response = await fetch('/api/spot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const res = await response.json();
+            if (res.success) {
+                msg.innerText = "✓ Spot Inviato!";
+                msg.style.color = "green";
+                setTimeout(loadSpots, 1500);
+            } else {
+                msg.innerText = "✗ " + res.message;
+                msg.style.color = "red";
+            }
+        } catch(e) {
+            msg.innerText = "✗ Errore di connessione.";
+            msg.style.color = "red";
+        }
+    }
+
+    loadSpots();
+    setInterval(loadSpots, 30000);
+</script>
+
+</body>
+</html>
