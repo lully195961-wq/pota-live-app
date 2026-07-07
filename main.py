@@ -28,7 +28,6 @@ async def get_pota_spots():
             }
             response = await client.get(url, headers=headers, timeout=10)
             
-            # Se il server POTA risponde con un errore, lo mandiamo al frontend per vederlo
             if response.status_code != 200:
                 return {"error": f"Errore Server POTA (Codice {response.status_code})"}
                 
@@ -39,12 +38,15 @@ async def get_pota_spots():
 @app.post("/api/spot")
 async def send_pota_spot(request: Request):
     data = await request.json()
-    login_url = "https://api.pota.app/auth/login"
+    
+    # CORREZIONE: Endpoint corretto per l'autenticazione sulle API POTA
+    login_url = "https://api.pota.app/login"
     login_payload = {"username": POTA_USERNAME, "password": POTA_PASSWORD}
+    
     headers_login = {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     }
     
     async with httpx.AsyncClient() as client:
@@ -54,10 +56,11 @@ async def send_pota_spot(request: Request):
                 return {"success": False, "message": f"Login fallito: {login_response.status_code}"}
                 
             token_data = login_response.json()
-            pota_jwt_token = token_data.get("token")
+            # POTA restituisce il token nel campo "token" o "jwt"
+            pota_jwt_token = token_data.get("token") or token_data.get("jwt")
             
             if not pota_jwt_token:
-                return {"success": False, "message": "Token non trovato."}
+                return {"success": False, "message": "Token non trovato nella risposta."}
             
             activator = data.get("activator", "").upper().strip()
             spotter = data.get("spotter", "").upper().strip()
@@ -81,13 +84,13 @@ async def send_pota_spot(request: Request):
                 "Authorization": f"Bearer {pota_jwt_token}", 
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             }
             
             response = await client.post(spot_url, json=pota_payload, headers=headers_spot)
             if response.status_code in [200, 201]:
                 return {"success": True, "message": "Spot inviato!"}
-            return {"success": False, "message": f"Errore {response.status_code}"}
+            return {"success": False, "message": f"Errore invio spot: {response.status_code}"}
         except Exception as e:
             return {"success": False, "message": str(e)}
 
