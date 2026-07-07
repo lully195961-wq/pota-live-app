@@ -57,6 +57,12 @@ async def proxy_pota_spot(request: Request):
         except Exception as e:
             return Response(content=f'{{"success": false, "message": "{str(e)}"}}', status_code=500, headers={"Content-Type": "application/json"})
 
+@app.get("/manifest.json")
+def get_manifest():
+    if os.path.exists("manifest.json"):
+        return FileResponse("manifest.json", media_type="application/json")
+    return {"error": "Manifest non trovato"}
+
 @app.get("/")
 def read_root():
     if os.path.exists("index.html"):
