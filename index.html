@@ -2,36 +2,49 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>POTA Auto-Spotter</title>
     
-    <!-- Configurazione Icone per Android e Mobile -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#3498db">
-    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/8157/8157117.png">
-    <link rel="apple-touch-icon" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/8157/8157117.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/3122/3122324.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/3122/3122324.png">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <style>
-        body { background-color: #f4f7f6; font-family: sans-serif; padding: 20px; }
-        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: none; margin-bottom: 20px; }
-        .table-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        th { background-color: #3498db !important; color: white !important; }
-        .badge-mode { font-weight: bold; padding: 5px 10px; border-radius: 5px; color: white; }
+        body { background-color: #f4f7f6; font-family: sans-serif; padding: 15px; }
+        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: none; margin-bottom: 15px; padding: 15px !important; }
+        .table-container { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        th { background-color: #3498db !important; color: white !important; font-size: 14px; padding: 8px 4px !important; }
+        td { font-size: 13px; padding: 8px 4px !important; vertical-align: middle; }
+        .badge-mode { font-weight: bold; padding: 3px 6px; border-radius: 4px; color: white; font-size: 11px; }
         .FT8 { background-color: #e74c3c; } .CW { background-color: #d35400; } .SSB { background-color: #2980b9; }
+        h3 { font-size: 1.3rem; margin-bottom: 15px !important; }
+        .mb-3 { margin-bottom: 0.7rem !important; }
+        .form-label { margin-bottom: 0.2rem; font-size: 13px; font-weight: bold; }
+        .form-control, .form-select { padding: 0.4rem 0.6rem; font-size: 13px; }
+
+        /* OTTIMIZZAZIONE SPECIFICA PER SMARTPHONE */
+        @media (max-width: 768px) {
+            body { padding: 6px; }
+            .card, .table-container { padding: 10px !important; margin-bottom: 10px; }
+            th { font-size: 11px; }
+            td { font-size: 11px; }
+            .badge-mode { font-size: 10px; padding: 2px 4px; }
+            h3 { font-size: 1.1rem; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- FORM DI INVIO -->
+<div class="container-fluid px-1">
+    <div class="row g-2">
         <div class="col-md-3">
-            <div class="card p-4">
-                <h3 class="text-center mb-4">Invia Auto-Spot</h3>
+            <div class="card">
+                <h3 class="text-center">Invia Auto-Spot</h3>
                 
                 <div class="mb-3">
-                    <label class="form-label font-weight-bold">Attivatore:</label>
+                    <label class="form-label">Attivatore:</label>
                     <input type="text" id="activator" class="form-control" placeholder="es. K2L">
                 </div>
                 
@@ -65,24 +78,23 @@
                 </div>
                 
                 <button id="btnInvia" class="btn btn-primary w-100" onclick="inviaSpot()">Invia Spot</button>
-                <div id="statusResult" class="text-center mt-3 font-weight-bold"></div>
+                <div id="statusResult" class="text-center mt-2 font-weight-bold" style="font-size: 13px;"></div>
             </div>
         </div>
 
-        <!-- TABELLA ATTIVITÀ -->
         <div class="col-md-9">
             <div class="table-container">
-                <h3 class="text-center mb-4">Attività POTA Live</h3>
-                <div class="row mb-3">
+                <h3 class="text-center">Attività POTA Live</h3>
+                <div class="row g-2 mb-3">
                     <div class="col">
-                        <select id="filterBand" class="form-select" onchange="loadSpots()">
+                        <select id="filterBand" class="form-select form-select-sm" onchange="loadSpots()">
                             <option value="all">Tutte le bande</option>
                             <option value="20m">20 metri (14 MHz)</option>
                             <option value="40m">40 metri (7 MHz)</option>
                         </select>
                     </div>
                     <div class="col">
-                        <select id="filterMode" class="form-select" onchange="loadSpots()">
+                        <select id="filterMode" class="form-select form-select-sm" onchange="loadSpots()">
                             <option value="all">Tutti i modi</option>
                             <option value="FT8">FT8</option>
                             <option value="CW">CW</option>
@@ -90,20 +102,22 @@
                         </select>
                     </div>
                 </div>
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Tempo</th>
-                            <th>Attivatore</th>
-                            <th>Frequenza</th>
-                            <th>Modo</th>
-                            <th>Referenza</th>
-                        </tr>
-                    </thead>
-                    <tbody id="spotsTable">
-                        <tr><td colspan="5" class="text-center">Caricamento in corso...</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tempo</th>
+                                <th>Attivatore</th>
+                                <th>Frequenza</th>
+                                <th>Modo</th>
+                                <th>Referenza</th>
+                            </tr>
+                        </thead>
+                        <tbody id="spotsTable">
+                            <tr><td colspan="5" class="text-center text-muted">Caricamento in corso...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -183,8 +197,6 @@
                 
                 tableBody.innerHTML = "";
                 let count = 0;
-
-                // Calcolo millisecondi attuali in formato UTC puro
                 const now = new Date();
                 const nowUtcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
 
@@ -196,9 +208,8 @@
                     if(filtMode !== "all" && spot.mode !== filtMode) return;
 
                     count++;
-                    if(count > 40) return;
+                    if(count > 35) return;
 
-                    // Calcolo del tempo trascorso relativo senza discrepanze di fuso orario
                     let timeStr = "Attivo";
                     if(spot.spotTime) {
                         const spotDate = new Date(spot.spotTime);
@@ -217,7 +228,6 @@
                         }
                     }
 
-                    // Frequenza pulita (es. 14.074 MHz)
                     const freqMhz = freq.toFixed(3);
 
                     const row = `<tr>
@@ -231,11 +241,11 @@
                 });
 
                 if(count === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nessun attivatore corrisponde ai filtri</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nessun attivatore</td></tr>`;
                 }
             })
             .catch(err => {
-                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Errore caricamento dati</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Errore dati</td></tr>`;
             });
     }
 
