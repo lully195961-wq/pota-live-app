@@ -23,7 +23,7 @@ async def get_pota_spots():
     async with httpx.AsyncClient() as client:
         try:
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
                 "Accept": "application/json"
             }
             response = await client.get(url, headers=headers, timeout=10)
@@ -39,24 +39,27 @@ async def get_pota_spots():
 async def send_pota_spot(request: Request):
     data = await request.json()
     
-    # CORREZIONE: Endpoint corretto per l'autenticazione sulle API POTA
     login_url = "https://api.pota.app/login"
     login_payload = {"username": POTA_USERNAME, "password": POTA_PASSWORD}
     
+    # Header identici a quelli di un browser moderno per evitare i blocchi 403
     headers_login = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
         "Content-Type": "application/json",
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        "Origin": "https://pota.app",
+        "Referer": "https://pota.app/"
     }
     
     async with httpx.AsyncClient() as client:
         try:
+            # Eseguiamo il login inviando il payload JSON corretto
             login_response = await client.post(login_url, json=login_payload, headers=headers_login)
+            
             if login_response.status_code != 200:
                 return {"success": False, "message": f"Login fallito: {login_response.status_code}"}
                 
             token_data = login_response.json()
-            # POTA restituisce il token nel campo "token" o "jwt"
             pota_jwt_token = token_data.get("token") or token_data.get("jwt")
             
             if not pota_jwt_token:
@@ -83,8 +86,10 @@ async def send_pota_spot(request: Request):
             headers_spot = {
                 "Authorization": f"Bearer {pota_jwt_token}", 
                 "Content-Type": "application/json",
-                "Accept": "application/json",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                "Accept": "application/json, text/plain, */*",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+                "Origin": "https://pota.app",
+                "Referer": "https://pota.app/"
             }
             
             response = await client.post(spot_url, json=pota_payload, headers=headers_spot)
