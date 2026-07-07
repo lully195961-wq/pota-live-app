@@ -7,39 +7,26 @@
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f4f9; margin: 0; }
         .wrapper { display: flex; max-width: 1400px; margin: auto; gap: 20px; align-items: flex-start; }
-        
         .side { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); box-sizing: border-box; }
         #input-side { width: 360px; flex-shrink: 0; }
         #output-side { flex-grow: 1; }
-        
         h2 { text-align: center; color: #1e293b; margin-top: 0; margin-bottom: 20px; font-size: 24px; }
-        
         label { font-weight: bold; display: block; margin-top: 12px; color: #475569; font-size: 14px; }
         input, select, textarea { width: 100%; padding: 10px; margin: 6px 0 12px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         textarea { height: 80px; resize: none; }
-        
         button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         button:hover { background: #2980b9; }
-        
         #message { margin-top: 12px; font-weight: bold; text-align: center; font-size: 14px; }
-        
         .filters-container { display: flex; gap: 10px; margin-bottom: 15px; }
-        .filters-container select { margin: 0; }
-        
-        table { width: 100%; border-collapse: collapse; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; }
         th, td { padding: 10px 12px; text-align: left; font-size: 14px; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #3498db; color: white; font-weight: bold; border: none; }
+        th { background-color: #3498db; color: white; font-weight: bold; }
         tr:nth-child(even) { background-color: #f8fafc; }
-        
-        th:first-child { border-top-left-radius: 6px; }
-        th:last-child { border-top-right-radius: 6px; }
-
-        .badge { display: inline-block; padding: 3px 8px; font-weight: bold; color: white; border-radius: 4px; font-size: 12px; text-align: center; min-width: 40px; }
+        .badge { display: inline-block; padding: 3px 8px; font-weight: bold; color: white; border-radius: 4px; font-size: 12px; text-align: center; }
         .badge-ft8 { background-color: #e74c3c; }
-        .badge-ft4 { background-color: #e74c3c; }
         .badge-cw { background-color: #d35400; }
         .badge-ssb { background-color: #2980b9; }
-        .badge-default { background-color: #7f8c8d; }
+        .error-msg { color: #e74c3c; font-weight: bold; text-align: center; padding: 20px; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -47,43 +34,33 @@
 <div class="wrapper">
     <div class="side" id="input-side">
         <h2>Invia Auto-Spot</h2>
-        
         <label>Attivatore:</label>
         <input type="text" id="activator" placeholder="es. N5RAD">
-        
         <label>Frequenza (kHz):</label>
         <input type="number" id="frequency" placeholder="14056">
-        
         <label>Modo:</label>
         <select id="mode">
             <option value="SSB">SSB</option>
             <option value="FT8">FT8</option>
             <option value="CW">CW</option>
         </select>
-        
         <label>Referenza POTA:</label>
         <input type="text" id="reference" placeholder="es. US-2912">
-        
         <label>Spotter:</label>
         <input type="text" id="spotter" value="IK6LMB" disabled style="background: #f1f5f9; color: #64748b;">
-        
         <label>Commenti:</label>
         <textarea id="comments" placeholder="es. FT8 o CW"></textarea>
-        
         <button onclick="sendSpot()">Invia Spot</button>
         <div id="message"></div>
     </div>
 
     <div class="side" id="output-side">
         <h2>Attività POTA Live</h2>
-        
         <div class="filters-container">
             <select id="bandFilter" onchange="displaySpots()">
                 <option value="All">Tutte le bande</option>
                 <option value="7">40m (7 MHz)</option>
                 <option value="14">20m (14 MHz)</option>
-                <option value="21">15m (21 MHz)</option>
-                <option value="28">10m (28 MHz)</option>
             </select>
             <select id="modeFilter" onchange="displaySpots()">
                 <option value="All">Tutti i modi</option>
@@ -104,7 +81,8 @@
                 </tr>
             </thead>
             <tbody>
-                </tbody>
+                <tr><td colspan="5" style="text-align:center;">Caricamento in corso...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
@@ -116,15 +94,111 @@
         if (!dateString) return "--:-- UTC";
         try {
             const d = new Date(dateString);
-            const hh = String(d.getUTCHours()).padStart(2, '0');
-            const mm = String(d.getUTCMinutes()).padStart(2, '0');
-            return hh + ":" + mm + " UTC";
-        } catch(e) {
-            return "--:-- UTC";
-        }
+            return String(d.getUTCHours()).padStart(2, '0') + ":" + String(d.getUTCMinutes()).padStart(2, '0') + " UTC";
+        } catch(e) { return "--:-- UTC"; }
     }
 
     function getModeBadge(mode) {
         if (!mode) return '';
         const m = String(mode).toUpperCase().trim();
-        if (
+        if (m === 'FT8' || m === 'FT4') return '<span class="badge badge-ft8">FT8</span>';
+        if (m === 'CW') return '<span class="badge badge-cw">CW</span>';
+        if (m === 'SSB') return '<span class="badge badge-ssb">SSB</span>';
+        return '<span class="badge">' + m + '</span>';
+    }
+
+    async function loadSpots() {
+        const tbody = document.querySelector('#spotsTable tbody');
+        try {
+            const response = await fetch('/api/spots');
+            const data = await response.json();
+            
+            // Se il backend ha restituito un errore strutturato, lo mostriamo esplicitamente
+            if (data && data.error) {
+                tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ ${data.error}</td></tr>`;
+                return;
+            }
+            
+            cachedSpots = data;
+            displaySpots();
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ Errore di connessione JavaScript: ${e.message}</td></tr>`;
+        }
+    }
+
+    function displaySpots() {
+        const band = document.getElementById('bandFilter').value;
+        const mode = document.getElementById('modeFilter').value;
+        const tbody = document.querySelector('#spotsTable tbody');
+        tbody.innerHTML = '';
+
+        if (!Array.isArray(cachedSpots) || cachedSpots.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessuno spot attivo al momento.</td></tr>';
+            return;
+        }
+
+        cachedSpots.forEach(s => {
+            if (!s.frequency) return;
+            const freqFloat = parseFloat(s.frequency);
+            
+            let matchBand = (band === 'All' || Math.floor(freqFloat) === parseInt(band));
+            const sMode = s.mode ? String(s.mode).toUpperCase().trim() : '';
+            let matchMode = (mode === 'All' || sMode === mode.toUpperCase());
+            
+            if (matchBand && matchMode) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatTime(s.spotTime)}</td>
+                    <td><strong>${s.activator || ''}</strong></td>
+                    <td>${freqFloat.toFixed(3)} MHz</td>
+                    <td>${getModeBadge(s.mode)}</td>
+                    <td>${s.reference || ''}</td>
+                `;
+                tbody.appendChild(row);
+            }
+        });
+        
+        if(tbody.innerHTML === '') {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessun risultato per i filtri selezionati.</td></tr>';
+        }
+    }
+
+    async function sendSpot() {
+        const msg = document.getElementById('message');
+        const data = {
+            activator: document.getElementById('activator').value,
+            frequency: document.getElementById('frequency').value,
+            mode: document.getElementById('mode').value,
+            reference: document.getElementById('reference').value,
+            comments: document.getElementById('comments').value
+        };
+        msg.innerText = "Invio in corso...";
+        msg.style.color = "#3498db";
+
+        try {
+            const response = await fetch('/api/spot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const res = await response.json();
+            if (res.success) {
+                msg.innerText = "✓ Spot Inviato!";
+                msg.style.color = "green";
+                setTimeout(loadSpots, 1500);
+            } else {
+                msg.innerText = "✗ " + res.message;
+                msg.style.color = "red";
+            }
+        } catch(e) {
+            msg.innerText = "✗ Errore di connessione.";
+            msg.style.color = "red";
+        }
+    }
+
+    loadSpots();
+    setInterval(loadSpots, 30000);
+</script>
+
+</body>
+</html>
