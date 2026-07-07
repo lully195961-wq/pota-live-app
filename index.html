@@ -90,15 +90,17 @@
 <script>
     let cachedSpots = [];
 
-    // Funzione per calcolare il tempo relativo trascorso (es. 45s fa, 3m fa)
+    // Funzione corretta per calcolare il tempo relativo allineato in UTC
     function formatRelativeTime(dateString) {
         if (!dateString) return "--";
         try {
             const spotDate = new Date(dateString);
             const now = new Date();
+            
+            // Convertiamo tutto nella differenza millisecondi pura, indipendente dai fusi locali
             const diffInSeconds = Math.floor((now.getTime() - spotDate.getTime()) / 1000);
 
-            if (diffInSeconds < 0 || isNaN(diffInSeconds)) return "Adesso";
+            if (diffInSeconds < 15 || isNaN(diffInSeconds)) return "Adesso";
             if (diffInSeconds < 60) return diffInSeconds + "s fa";
             
             const diffInMinutes = Math.floor(diffInSeconds / 60);
@@ -106,80 +108,4 @@
             
             const diffInHours = Math.floor(diffInMinutes / 60);
             return diffInHours + "h fa";
-        } catch(e) { 
-            return "--"; 
-        }
-    }
-
-    function getModeBadge(mode) {
-        if (!mode) return '';
-        const m = String(mode).toUpperCase().trim();
-        if (m === 'FT8' || m === 'FT4') return '<span class="badge badge-ft8">FT8</span>';
-        if (m === 'CW') return '<span class="badge badge-cw">CW</span>';
-        if (m === 'SSB') return '<span class="badge badge-ssb">SSB</span>';
-        return '<span class="badge">' + m + '</span>';
-    }
-
-    async function loadSpots() {
-        const tbody = document.querySelector('#spotsTable tbody');
-        try {
-            const response = await fetch('/api/spots');
-            const data = await response.json();
-            
-            if (data && data.error) {
-                tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ ${data.error}</td></tr>`;
-                return;
-            }
-            
-            cachedSpots = data;
-            displaySpots();
-        } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ Errore di connessione JavaScript: ${e.message}</td></tr>`;
-        }
-    }
-
-    function displaySpots() {
-        const band = document.getElementById('bandFilter').value;
-        const mode = document.getElementById('modeFilter').value;
-        const tbody = document.querySelector('#spotsTable tbody');
-        tbody.innerHTML = '';
-
-        if (!Array.isArray(cachedSpots) || cachedSpots.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessuno spot attivo al momento.</td></tr>';
-            return;
-        }
-
-        cachedSpots.forEach(s => {
-            if (!s.frequency) return;
-            const freqFloat = parseFloat(s.frequency);
-            
-            let matchBand = (band === 'All' || Math.floor(freqFloat) === parseInt(band));
-            const sMode = s.mode ? String(s.mode).toUpperCase().trim() : '';
-            let matchMode = (mode === 'All' || sMode === mode.toUpperCase());
-            
-            if (matchBand && matchMode) {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${formatRelativeTime(s.spotTime)}</td>
-                    <td><strong>${s.activator || ''}</strong></td>
-                    <td>${freqFloat.toFixed(3)} MHz</td>
-                    <td>${getModeBadge(s.mode)}</td>
-                    <td>${s.reference || ''}</td>
-                `;
-                tbody.appendChild(row);
-            }
-        });
-        
-        if(tbody.innerHTML === '') {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessun risultato per i filtri selezionati.</td></tr>';
-        }
-    }
-
-    async function sendSpot() {
-        const msg = document.getElementById('message');
-        const data = {
-            activator: document.getElementById('activator').value,
-            frequency: document.getElementById('frequency').value,
-            mode: document.getElementById('mode').value,
-            reference: document.getElementById('reference').value,
-            comments: document
+        } catch(e) {
