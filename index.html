@@ -2,56 +2,88 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>POTA Tool</title>
+    <title>POTA Tool - Completo</title>
     <style>
-        body { font-family: sans-serif; display: flex; padding: 20px; gap: 20px; }
-        #input-side { width: 40%; }
-        #output-side { width: 60%; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+        .wrapper { display: flex; gap: 20px; }
+        .side { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #input-side { width: 350px; }
+        #output-side { flex-grow: 1; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #007bff; color: white; }
     </style>
 </head>
 <body>
 
-<div id="input-side">
-    <h2>Invia Auto-Spot</h2>
-    <input type="text" id="activator" placeholder="Attivatore">
-    <input type="number" id="frequency" placeholder="Frequenza kHz">
-    <input type="text" id="reference" placeholder="Referenza">
-    <textarea id="comments" placeholder="Commenti"></textarea>
-    <button onclick="sendSpot()">Invia Spot</button>
-    <div id="message"></div>
-</div>
+<div class="wrapper">
+    <div class="side" id="input-side">
+        <h2>Invia Auto-Spot</h2>
+        <input type="text" id="activator" placeholder="Attivatore (es. IK6LMB)">
+        <input type="number" id="frequency" placeholder="Frequenza kHz">
+        <select id="mode">
+            <option value="FT8">FT8</option><option value="CW">CW</option>
+            <option value="SSB">SSB</option><option value="FT4">FT4</option>
+        </select>
+        <input type="text" id="reference" placeholder="Referenza (es. IT-1234)">
+        <textarea id="comments" placeholder="Commenti"></textarea>
+        <button onclick="sendSpot()">Invia Spot</button>
+        <div id="message"></div>
+    </div>
 
-<div id="output-side">
-    <h2>Attività POTA Live</h2>
-    <table id="spotsTable">
-        <thead><tr><th>Attivatore</th><th>Frequenza</th><th>Referenza</th></tr></thead>
-        <tbody></tbody>
-    </table>
+    <div class="side" id="output-side">
+        <h2>Attività POTA Live</h2>
+        <select id="bandFilter" onchange="loadSpots()">
+            <option value="All">Tutte le bande</option>
+            <option value="7">40m</option><option value="14">20m</option>
+        </select>
+        <table id="spotsTable">
+            <thead><tr><th>Attivatore</th><th>Frequenza</th><th>Referenza</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    // CARICAMENTO TABELLA
     async function loadSpots() {
-        try {
-            const response = await fetch('/api/spots');
-            const spots = await response.json();
-            const tbody = document.querySelector('#spotsTable tbody');
-            tbody.innerHTML = ''; 
-            spots.forEach(spot => {
-                tbody.innerHTML += `<tr><td>${spot.activator}</td><td>${spot.frequency}</td><td>${spot.reference}</td></tr>`;
+        const response = await fetch('/api/spots');
+        const allSpots = await response.json();
+        const band = document.getElementById('bandFilter').value;
+        const tbody = document.querySelector('#spotsTable tbody');
+        tbody.innerHTML = '';
+        
+        allSpots.filter(s => band === 'All' || s.frequency.toString().startsWith(band))
+            .forEach(s => {
+                tbody.innerHTML += `<tr><td>${s.activator}</td><td>${s.frequency} kHz</td><td>${s.reference}</td></tr>`;
             });
-        } catch(e) { console.error("Errore nel caricamento:", e); }
     }
-    
-    // Auto-refresh ogni 30 secondi
-    loadSpots();
-    setInterval(loadSpots, 30000);
 
     async function sendSpot() {
-        // ... (la tua funzione di invio che abbiamo scritto prima)
+        const data = {
+            activator: document.getElementById('activator').value,
+            frequency: document.getElementById('frequency').value,
+            mode: document.getElementById('mode').value,
+            reference: document.getElementById('reference').value,
+            comments: document.getElementById('comments').value
+        };
+        
+        const response = await fetch('/api/spot', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        const res = await response.json();
+        document.getElementById('message').innerText = res.message;
+        if(res.success) {
+            // Pulizia campi
+            document.querySelectorAll('input, textarea').forEach(i => i.value = '');
+        }
     }
+    loadSpots();
+    setInterval(loadSpots, 30000);
 </script>
 </body>
 </html>
