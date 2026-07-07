@@ -1,7 +1,5 @@
 import os
-import httpx
-import telnetlib3
-import asyncio
+import httpx    
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,14 +14,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- QUESTA PARTE RIPRISTINA LA TABELLA A DESTRA ---
+# CREDENZIALI POTA
+POTA_USERNAME = "ik6lmb@libero.it"
+POTA_PASSWORD = "Marilin1!"
+
+# --- AGGIUSTATA QUESTA FUNZIONE: ORA IL FLUSSO FUNZIONA DI NUOVO ---
 @app.get("/api/spots")
 async def get_pota_spots():
     url = "https://api.pota.app/spot"
     async with httpx.AsyncClient() as client:
         try:
-            # Header necessario per non essere bloccati da POTA
-            headers = {"User-Agent": "Mozilla/5.0"}
+            # Aggiungiamo gli headers per simulare un browser reale ed evitare il blocco automatico
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/json"
+            }
             response = await client.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
                 return response.json()
@@ -31,38 +36,68 @@ async def get_pota_spots():
         except Exception:
             return []
 
-# --- QUESTA PARTE GESTISCE L'INVIO VIA CLUSTER ---
 @app.post("/api/spot")
 async def send_pota_spot(request: Request):
     data = await request.json()
-    activator = data.get("activator", "").upper().strip()
-    reference = data.get("reference", "").upper().strip()
-    mode = data.get("mode", "").upper().strip()
-    comments = data.get("comments", "").strip()
-    spotter = "IK6LMB"
     
-    try:
-        freq_khz = float(data.get("frequency", 0))
-        freq_mhz = freq_khz / 1000.0 if freq_khz > 1000 else freq_khz
-    except:
-        return {"success": False, "message": "Frequenza non valida."}
+    login_url = "https://api.pota.app/auth/login"
+    login_payload = {
+        "username": POTA_USERNAME, 
+        "password": POTA_PASSWORD
+    }
+    
+    headers_login = {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            login_response = await client.post(login_url, json=login_payload, headers=headers_login)
+            
+            if login_response.status_code != 200:
+                return {"success": False, "message": f"Login fallito (Codice {login_response.status_code}): {login_response.text}"}
+                
+            token_data = login_response.json()
+            pota_jwt_token = token_data.get("token")
+            
+            if not pota_jwt_token:
+                return {"success": False, "message": "Token non trovato nella risposta di login di POTA."}
+            
+            activator = data.get("activator", "").upper().strip()
+            spotter = data.get("spotter", "").upper().strip()
+            reference = data.get("reference", "").upper().strip()
+            mode = data.get("mode", "").upper().strip()
+            
+            freq_khz = float(data.get("frequency", 0))
+            freq_mhz = freq_khz / 1000.0 if freq_khz > 1000 else freq_khz
 
-    # Comando per il cluster
-    comment_string = f"POTA-{reference} {mode} {comments}".strip()
-    cluster_command = f"DX {freq_mhz:.3f} {activator} {comment_string}\r\n"
-
-    try:
-        reader, writer = await telnetlib3.open_connection('ik4icz.dyndns.org', 8000)
-        await reader.readuntil(b'login:')
-        writer.write(f"{spotter}\r\n")
-        await writer.drain()
-        writer.write(cluster_command)
-        await writer.drain()
-        writer.close()
-        return {"success": True, "message": "Spot inviato correttamente!"}
-    except Exception as e:
-        return {"success": False, "message": f"Errore: {str(e)}"}
+            spot_url = "https://api.pota.app/spot"
+            pota_payload = {
+                "activator": activator,
+                "spotter": spotter,
+                "frequency": freq_mhz,
+                "mode": mode,
+                "reference": reference,
+                "comments": data.get("comments", "")
+            }
+            
+            headers_spot = {
+                "Authorization": f"Bearer {pota_jwt_token}", 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+            
+            response = await client.post(spot_url, json=pota_payload, headers=headers_spot)
+            if response.status_code in [200, 201]:
+                return {"success": True, "message": "Spot inviato!"}
+            return {"success": False, "message": f"Errore POTA {response.status_code}: {response.text}"}
+            
+        except Exception as e:
+            return {"success": False, "message": f"Errore di connessione: {str(e)}"}
 
 @app.get("/")
 def read_root():
-    return FileResponse("index.html")
+    if os.path.exists("index.html"):
+        return FileResponse("index.html")
+    return HTMLResponse("<h1>File index.html non trovato nel server</h1>")
