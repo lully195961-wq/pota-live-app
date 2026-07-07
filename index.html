@@ -101,7 +101,6 @@
 </div>
 
 <script>
-    // IL TUO ACCESS TOKEN VALIDO AGGIORNATO
     const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN2hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImY5MTA3YmIxLTBlOWQtNGMxNi1iNTg1LWMzMjNlZmVlZjU2NSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM0MjUzOTcsImV4cCI6MTc4MzQyODk5NywiaWF0IjoxNzgzNDI1Mzk3LCJqdGkiOiJiOTNhMGM5ZC0zNDUwLTQ2YjUtYmEzYi01MjU2ZjljMWVkMmUiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.Hc1ZIbWyHhQmjp1N_Tar0oZ1b46FG8u1XGm7PNoGcjL03dRe95qrzxtnhPWM6Iasl_qpdbo67pmauogI20LHVxlhOvfZet6QSxNAf13su3Zkxk7_829QZBE2hmg5ngJDWUhDueOi1KfMzJhuIHlF0uA5ju14TEDzq7FDcPwTXcqgFXXkz1X84RnvMIW_0vtsi_qJtOkGe04rZJ8JrT5kRhYpbP0B5V02Bzvp2GXJI-4gcch4kclwLsBtAq4rtc7_7klTsM7Ukx96se9Dbo3EmwW42eaFQ__H1mT0xhIxX9jwDu4G4MUmXf582i6Zzs0mrBvt1DLRh2yQMW2WlBsO7A";
 
     function inviaSpot() {
@@ -124,7 +123,6 @@
 
         const freqMhz = freqVal > 1000 ? freqVal / 1000.0 : freqVal;
 
-        // Payload formattato esattamente come richiesto dal server POTA nativo
         const payload = {
             activator: act,
             spotter: "IK6LMB",
@@ -142,13 +140,15 @@
                 'Authorization': `Bearer ${POTA_TOKEN}`
             },
             body: JSON.stringify(payload)
-            window.location.reload()
         })
-        .then(async response => {
+        .then(response => {
             btn.disabled = false;
             if (response.status === 200 || response.status === 201) {
                 resDiv.innerHTML = "<span class='text-success'>✓ Spot Inviato con successo!</span>";
-                setTimeout(() => { loadSpots(); }, 1500);
+                setTimeout(() => { 
+                    loadSpots(); 
+                    resDiv.innerHTML = "";
+                }, 2000);
             } else {
                 resDiv.innerHTML = `<span class='text-danger'>X Rifiutato da POTA: Codice ${response.status}</span>`;
             }
@@ -178,13 +178,12 @@
                 data.forEach(spot => {
                     const freq = parseFloat(spot.frequency);
                     
-                    // Logica dei filtri bande
                     if(filtBand === "20m" && (freq < 14.0 || freq > 14.35)) return;
                     if(filtBand === "40m" && (freq < 7.0 || freq > 7.3)) return;
                     if(filtMode !== "all" && spot.mode !== filtMode) return;
 
                     count++;
-                    if(count > 40) return; // Limite righe grafiche
+                    if(count > 40) return;
 
                     let timeStr = "Attivo";
                     if(spot.spotTime) {
@@ -210,7 +209,6 @@
             });
     }
 
-    // Carica la griglia all'avvio e aggiorna ogni 30 secondi
     loadSpots();
     setInterval(loadSpots, 30000);
 </script>
