@@ -13,8 +13,8 @@
         h2 { text-align: center; color: #1e293b; margin-top: 0; margin-bottom: 20px; font-size: 24px; }
         label { font-weight: bold; display: block; margin-top: 12px; color: #475569; font-size: 14px; }
         input, select, textarea { width: 100%; padding: 10px; margin: 6px 0 12px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        textarea { height: 80px; resize: none; }
-        button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        textarea { height: 60px; resize: none; }
+        button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
         button:hover { background: #2980b9; }
         #message { margin-top: 12px; font-weight: bold; text-align: center; font-size: 14px; }
         .filters-container { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -27,6 +27,7 @@
         .badge-cw { background-color: #d35400; }
         .badge-ssb { background-color: #2980b9; }
         .error-msg { color: #e74c3c; font-weight: bold; text-align: center; padding: 20px; font-size: 16px; }
+        .cred-section { background: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px dashed #cbd5e1; }
     </style>
 </head>
 <body>
@@ -34,6 +35,14 @@
 <div class="wrapper">
     <div class="side" id="input-side">
         <h2>Invia Auto-Spot</h2>
+        
+        <div class="cred-section">
+            <label>POTA Username:</label>
+            <input type="text" id="pota_user" value="ik6lmb@libero.it">
+            <label>POTA Password:</label>
+            <input type="password" id="pota_pass" value="Marilin1!">
+        </div>
+
         <label>Attivatore:</label>
         <input type="text" id="activator" placeholder="es. N5RAD">
         <label>Frequenza (kHz):</label>
@@ -50,7 +59,7 @@
         <input type="text" id="spotter" value="IK6LMB" disabled style="background: #f1f5f9; color: #64748b;">
         <label>Commenti:</label>
         <textarea id="comments" placeholder="es. FT8 o CW"></textarea>
-        <button onclick="sendSpot()">Invia Spot</button>
+        <button onclick="sendSpotDirectly()">Invia Spot</button>
         <div id="message"></div>
     </div>
 
@@ -73,7 +82,7 @@
         <table id="spotsTable">
             <thead>
                 <tr>
-                    <th>Ora (UTC)</th>
+                    <th>Tempo trascorso</th>
                     <th>Attivatore</th>
                     <th>Frequenza</th>
                     <th>Modo</th>
@@ -94,8 +103,28 @@
         if (!dateString) return "--:-- UTC";
         try {
             const d = new Date(dateString);
+            if (isNaN(d.getTime())) return "--:-- UTC";
             return String(d.getUTCHours()).padStart(2, '0') + ":" + String(d.getUTCMinutes()).padStart(2, '0') + " UTC";
         } catch(e) { return "--:-- UTC"; }
+    }
+
+    function getRelativeTimeLabel(dateString) {
+        if (!dateString) return "--";
+        try {
+            let isoString = dateString.trim().replace(" ", "T");
+            if (!isoString.endsWith("Z") && !isoString.includes("+")) isoString += "Z";
+            const spotDate = new Date(isoString);
+            const now = new Date();
+            if (isNaN(spotDate.getTime())) return formatTime(dateString);
+            const diffInSeconds = Math.floor((now.getTime() - spotDate.getTime()) / 1000);
+            if (diffInSeconds < -60 || diffInSeconds > 86400) return formatTime(dateString);
+            if (diffInSeconds < 15) return "Adesso";
+            if (diffInSeconds < 60) return diffInSeconds + "s fa";
+            const diffInMinutes = Math.floor(diffInSeconds / 60);
+            if (diffInMinutes < 60) return diffInMinutes + "m fa";
+            const diffInHours = Math.floor(diffInMinutes / 60);
+            return diffInHours + "h fa";
+        } catch(e) { return formatTime(dateString); }
     }
 
     function getModeBadge(mode) {
@@ -112,17 +141,14 @@
         try {
             const response = await fetch('/api/spots');
             const data = await response.json();
-            
-            // Se il backend ha restituito un errore strutturato, lo mostriamo esplicitamente
             if (data && data.error) {
                 tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ ${data.error}</td></tr>`;
                 return;
             }
-            
             cachedSpots = data;
             displaySpots();
         } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ Errore di connessione JavaScript: ${e.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="error-msg">⚠️ Errore caricamento: ${e.message}</td></tr>`;
         }
     }
 
@@ -133,14 +159,13 @@
         tbody.innerHTML = '';
 
         if (!Array.isArray(cachedSpots) || cachedSpots.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessuno spot attivo al momento.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessuno spot attivo.</td></tr>';
             return;
         }
 
         cachedSpots.forEach(s => {
             if (!s.frequency) return;
             const freqFloat = parseFloat(s.frequency);
-            
             let matchBand = (band === 'All' || Math.floor(freqFloat) === parseInt(band));
             const sMode = s.mode ? String(s.mode).toUpperCase().trim() : '';
             let matchMode = (mode === 'All' || sMode === mode.toUpperCase());
@@ -148,7 +173,7 @@
             if (matchBand && matchMode) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${formatTime(s.spotTime)}</td>
+                    <td>${getRelativeTimeLabel(s.spotTime)}</td>
                     <td><strong>${s.activator || ''}</strong></td>
                     <td>${freqFloat.toFixed(3)} MHz</td>
                     <td>${getModeBadge(s.mode)}</td>
@@ -157,41 +182,77 @@
                 tbody.appendChild(row);
             }
         });
-        
-        if(tbody.innerHTML === '') {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessun risultato per i filtri selezionati.</td></tr>';
-        }
     }
 
-    async function sendSpot() {
+    // ESEGUE IL LOGIN E L'INVIO DIRETTAMENTE DAL TUO PC BYPASSANDO RENDER
+    async function sendSpotDirectly() {
         const msg = document.getElementById('message');
-        const data = {
-            activator: document.getElementById('activator').value,
-            frequency: document.getElementById('frequency').value,
-            mode: document.getElementById('mode').value,
-            reference: document.getElementById('reference').value,
-            comments: document.getElementById('comments').value
-        };
-        msg.innerText = "Invio in corso...";
+        const user = document.getElementById('pota_user').value;
+        const pass = document.getElementById('pota_pass').value;
+
+        msg.innerText = "Autenticazione in corso...";
         msg.style.color = "#3498db";
 
         try {
-            const response = await fetch('/api/spot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+            // 1. Chiamata di login fatta dal browser
+            const loginRes = await fetch("https://api.pota.app/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                body: JSON.stringify({ username: user, password: pass })
             });
-            const res = await response.json();
-            if (res.success) {
-                msg.innerText = "✓ Spot Inviato!";
+
+            if (!loginRes.ok) {
+                msg.innerText = `✗ Login Fallito (Codice ${loginRes.status})`;
+                msg.style.color = "red";
+                return;
+            }
+
+            const tokenData = await loginRes.json();
+            const token = tokenData.token || tokenData.jwt;
+
+            if (!token) {
+                msg.innerText = "✗ Token non generato.";
+                msg.style.color = "red";
+                return;
+            }
+
+            msg.innerText = "Invio dello spot in corso...";
+
+            // 2. Preparazione dati dello Spot
+            const freqKhz = parseFloat(document.getElementById('frequency').value || 0);
+            const freqMhz = freqKhz > 1000 ? freqKhz / 1000.0 : freqKhz;
+
+            const spotPayload = {
+                activator: document.getElementById('activator').value.toUpperCase().strip,
+                spotter: document.getElementById('spotter').value.toUpperCase(),
+                frequency: freqMhz,
+                mode: document.getElementById('mode').value.toUpperCase(),
+                reference: document.getElementById('reference').value.toUpperCase(),
+                comments: document.getElementById('comments').value
+            };
+
+            // 3. Invio effettivo a POTA tramite il browser
+            const spotRes = await fetch("https://api.pota.app/spot", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify(spotPayload)
+            });
+
+            if (spotRes.ok) {
+                msg.innerText = "✓ Spot Inviato con Successo!";
                 msg.style.color = "green";
-                setTimeout(loadSpots, 1500);
+                setTimeout(loadSpots, 1000);
             } else {
-                msg.innerText = "✗ " + res.message;
+                msg.innerText = `✗ Errore Invio Spot (${spotRes.status})`;
                 msg.style.color = "red";
             }
-        } catch(e) {
-            msg.innerText = "✗ Errore di connessione.";
+
+        } catch (e) {
+            msg.innerText = `✗ Errore di rete: ${e.message}`;
             msg.style.color = "red";
         }
     }
@@ -199,6 +260,5 @@
     loadSpots();
     setInterval(loadSpots, 30000);
 </script>
-
 </body>
 </html>
