@@ -21,14 +21,19 @@ async def get_pota_spots():
         try:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-                "Accept": "application/json"
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7"
             }
             response = await client.get(url, headers=headers, timeout=10)
             if response.status_code != 200:
-                return {"error": f"Errore Server POTA (Codice {response.status_code})"}
-            return response.json()
+                return {"error": f"Errore API POTA (Status {response.status_code})"}
+            
+            res_data = response.json()
+            if isinstance(res_data, list):
+                return res_data
+            return {"error": "Formato dati POTA non valido (Non è una lista)"}
         except Exception as e:
-            return {"error": f"Errore di connessione Python: {str(e)}"}
+            return {"error": f"Errore server Python: {str(e)}"}
 
 @app.post("/api/spot")
 async def proxy_pota_spot(request: Request):
@@ -57,13 +62,6 @@ async def proxy_pota_spot(request: Request):
         except Exception as e:
             return Response(content=f'{{"success": false, "message": "{str(e)}"}}', status_code=500, headers={"Content-Type": "application/json"})
 
-# ROTTA AGGIUNTA: Invia l'immagine icon.png al cellulare
-@app.get("/icon.png")
-def get_icon():
-    if os.path.exists("icon.png"):
-        return FileResponse("icon.png", media_type="image/png")
-    return Response(content='{"error": "Icona non trovata"}', status_code=404, media_type="application/json")
-
 @app.get("/manifest.json")
 def get_manifest():
     if os.path.exists("manifest.json"):
@@ -74,4 +72,4 @@ def get_manifest():
 def read_root():
     if os.path.exists("index.html"):
         return FileResponse("index.html")
-    return HTMLResponse("<h1>File index.html non trovato</h1>")
+    return HTMLResponse("<h1>File index.html non trovato nella root del server</h1>")
