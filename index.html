@@ -231,5 +231,98 @@
                 let count = 0;
                 const now = new Date();
                 const nowUtcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
-
                 const visti = new Set();
+
+                data.forEach(spot => {
+                    let rawFreq = parseFloat(spot.frequency);
+                    if(isNaN(rawFreq)) return;
+
+                    if (rawFreq > 100000) {
+                        rawFreq = rawFreq / 1000000.0;
+                    } else if (rawFreq > 1000) {
+                        rawFreq = rawFreq / 1000.0;
+                    }
+
+                    let bandaCorrente = getBandaString(rawFreq);
+                    let chiaveUnica = `${spot.activator.toUpperCase().trim()}_${bandaCorrente}`;
+                    
+                    if (visti.has(chiaveUnica)) return; 
+                    visti.add(chiaveUnica);
+
+                    let modoRilevato = (spot.mode || "").toUpperCase().trim();
+                    let sottoModo = (spot.submode || "").toUpperCase().trim();
+                    let commenti = (spot.comments || "").toUpperCase();
+                    
+                    if (sottoModo === "FT4" || modoRilevato === "FT4" || commenti.includes("FT4")) {
+                        modoRilevato = "FT4";
+                    } else if (sottoModo === "FT8" || modoRilevato === "FT8" || commenti.includes("FT8")) {
+                        modoRilevato = "FT8";
+                    } else if (modoRilevato === "PHONE" || modoRilevato === "SSB" || commenti.includes("SSB") || commenti.includes("LSB") || commenti.includes("USB")) {
+                        modoRilevato = "SSB";
+                    } else if (modoRilevato === "CW" || commenti.includes("CW")) {
+                        modoRilevato = "CW";
+                    } else if (modoRilevato === "DATA" || modoRilevato === "DIGITAL") {
+                        let f = rawFreq;
+                        
+                        // Logica FT4 pulita senza conflitti
+                        if (
+                            (bandaCorrente === "160m" && f >= 1.839 && f <= 1.841) ||
+                            (bandaCorrente === "80m"  && f >= 3.567 && f <= 3.569) ||
+                            (bandaCorrente === "60m"  && f >= 5.356 && f <= 5.358) ||
+                            (bandaCorrente === "40m"  && f >= 7.046 && f <= 7.049) || 
+                            (bandaCorrente === "30m"  && f >= 10.139 && f <= 10.141) ||
+                            (bandaCorrente === "20m"  && f >= 14.079 && f <= 14.082) || 
+                            (bandaCorrente === "17m"  && f >= 18.103 && f <= 18.105) ||
+                            (bandaCorrente === "15m"  && f >= 21.139 && f <= 21.141) || 
+                            (bandaCorrente === "12m"  && f >= 24.918 && f <= 24.920) ||
+                            (bandaCorrente === "10m"  && f >= 28.179 && f <= 28.181)
+                        ) {
+                            modoRilevato = "FT4";
+                        } 
+                        // Logica FT8 pulita senza conflitti
+                        else if (
+                            (bandaCorrente === "160m" && f >= 1.839 && f <= 1.841) ||
+                            (bandaCorrente === "80m"  && f >= 3.572 && f <= 3.574) ||
+                            (bandaCorrente === "60m"  && f >= 5.356 && f <= 5.358) ||
+                            (bandaCorrente === "40m"  && f >= 7.072 && f <= 7.076) || 
+                            (bandaCorrente === "30m"  && f >= 10.135 && f <= 10.137) ||
+                            (bandaCorrente === "20m"  && f >= 14.072 && f <= 14.076) || 
+                            (bandaCorrente === "17m"  && f >= 18.099 && f <= 18.101) ||
+                            (bandaCorrente === "15m"  && f >= 21.072 && f <= 21.076) || 
+                            (bandaCorrente === "12m"  && f >= 24.914 && f <= 24.916) ||
+                            (bandaCorrente === "10m"  && f >= 28.072 && f <= 28.076) ||
+                            (bandaCorrente === "6m"   && f >= 50.312 && f <= 50.314) ||
+                            (bandaCorrente === "2m"   && f >= 144.173 && f <= 144.175)
+                        ) {
+                            modoRilevato = "FT8";
+                        } 
+                        else {
+                            let dec = f - Math.floor(f);
+                            modoRilevato = (dec > 0.076) ? "FT4" : "FT8";
+                        }
+                    } else {
+                        modoRilevato = "SSB";
+                    }
+
+                    if(filtBand !== "all" && filtBand !== bandaCorrente) return;
+                    
+                    if(filtMode !== "all") {
+                        if(filtMode === "SSB" && modoRilevato !== "SSB") return;
+                        if(filtMode !== "SSB" && modoRilevato !== filtMode) return;
+                    }
+
+                    count++;
+                    if(count > 35) return;
+
+                    let timeStr = "Attivo";
+                    if(spot.spotTime) {
+                        const spotDate = new Date(spot.spotTime);
+                        const diffMs = nowUtcMs - spotDate.getTime();
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const diffSecs = Math.floor(diffMs / 1000);
+
+                        if (diffMins < 1) {
+                            timeStr = diffSecs <= 10 ? "Ora" : `${diffSecs}s fa`;
+                        } else if (diffMins >= 60) {
+                            const diffHours = Math.floor(diffMins / 60);
+                            const remMins = diffMins % 6
