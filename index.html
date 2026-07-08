@@ -145,9 +145,6 @@
 </div>
 
 <script>
-    // TOKEN AGGIORNATO E RIPRISTINATO NEL CODICE FRONT-END
-    const POTA_TOKEN = "eyJraWQiOiI4Wm9SbnhvdER4QkNmVlFCQjNSU1dlWGZyWE9YMzFzY05FRFJheVVYa1NnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzM2RkNWEwZi0yYTA4LTQ1YjUtOWIxZC0yMWU3OGYwM2Q1ODIiLCJjb2duaXRvOmdyb3VwcyI6WyJVcGxvYWQiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbS91cy1lYXN0LTJfbkE1alowa2xoIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiN7hsdXFjdDBuMm5ja2liN2k3c2Q1NzUzb2EiLCJldmVudF9pZCI6ImQ2NzE5MTU0LTc5OWQtNDdmMC1hYTEwLWRhYzQ5MmZlYzViOCIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODM4NTM4MDIsImV4cCI6MTc4Mzg1NzQwMiwiaWF0IjoxNzgzNDUzODAyLCJqdGkiOiIwY2ZlNGYyZi0yNTNmLTQ5MWItOTJhMy0yM2U5NDNkMDU1MmEiLCJ1c2VybmFtZSI6IjMzZGQ1YTBmLTJhMDgtNDViNS05YjFkLTIxZTc4ZjAzZDU4MiJ9.TcczyVRYl4Qcb9EMR-AyFN8u5mvAjrmHHst438mk2rcHQxoHgDNiH6uYPI-mhJwGdoSD30jkM65KnolFvN9QmM620HrVP6iKV-EcS2-6gWBZnTiAXThJpGvYh-gbZ4iQbs5_DXhiH_BnwIFaDt_UqMJrh7FTPteh8UYTgyjnAicLP6z7bxFrb7cjfuPtfxXiWp3ftfLZWTNPQ3C8vzfpvAcEmuYEzzJqrHLrnZfJ3kNEY39zoGr2qJVjRd5zqKlSHEN1fypZ82Vp4O8urI5kKhBg4rSht1f7rckB7ejGtekHt3qtygXcu68PoqrVHw0gz5GjtOb8WITpfuD28S7jZg";
-
     function inviaSpot() {
         const btn = document.getElementById('btnInvia');
         const resDiv = document.getElementById('statusResult');
@@ -180,10 +177,7 @@
 
         fetch('/api/spot', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${POTA_TOKEN}`
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
         .then(response => {
@@ -204,6 +198,22 @@
         });
     }
 
+    function getBandaString(freq) {
+        if(freq >= 50.0 && freq <= 54.0) return "6m";
+        if(freq >= 28.0 && freq <= 29.7) return "10m";
+        if(freq >= 24.89 && freq <= 24.99) return "12m";
+        if(freq >= 21.0 && freq <= 21.45) return "15m";
+        if(freq >= 18.068 && freq <= 18.168) return "17m";
+        if(freq >= 14.0 && freq <= 14.35) return "20m";
+        if(freq >= 10.1 && freq <= 10.15) return "30m";
+        if(freq >= 7.0 && freq <= 7.3) return "40m";
+        if(freq >= 5.06 && freq <= 5.45) return "60m";
+        if(freq >= 3.5 && freq <= 3.8) return "80m";
+        if(freq >= 1.8 && freq <= 2.0) return "160m";
+        if(freq >= 144.0 && freq <= 148.0) return "2m";
+        return "unknown";
+    }
+
     function loadSpots() {
         const tableBody = document.getElementById('spotsTable');
         const filtBand = document.getElementById('filterBand').value;
@@ -222,6 +232,9 @@
                 const now = new Date();
                 const nowUtcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
 
+                // Inizializziamo un set per evitare la duplicazione selvaggia degli attivatori sulla stessa banda
+                const visti = new Set();
+
                 data.forEach(spot => {
                     let rawFreq = parseFloat(spot.frequency);
                     if(isNaN(rawFreq)) return;
@@ -232,41 +245,38 @@
                         rawFreq = rawFreq / 1000.0;
                     }
 
-                    // Assegnazione Modi
+                    // Determina la banda matematica dello spot attuale
+                    let bandaCorrente = getBandaString(rawFreq);
+
+                    // --- DE-DUPLICAZIONE STRIC_MODE ---
+                    // Se l'attivatore è già comparso in questa stessa banda negli spot recenti, saltalo!
+                    let chiaveUnica = `${spot.activator.toUpperCase().trim()}_${bandaCorrente}`;
+                    if (visti.has(chiaveUnica)) {
+                        return; 
+                    }
+                    visti.add(chiaveUnica);
+
+                    // --- PARSING ROBUSTO DEI MODI ---
                     let modoRilevato = (spot.mode || "").toUpperCase().trim();
                     let sottoModo = (spot.submode || "").toUpperCase().trim();
                     let commenti = (spot.comments || "").toUpperCase();
                     
-                    if (sottoModo === "FT4" || commenti.includes("FT4")) {
+                    if (sottoModo === "FT4" || modoRilevato === "FT4" || commenti.includes("FT4")) {
                         modoRilevato = "FT4";
-                    } else if (sottoModo === "FT8" || commenti.includes("FT8")) {
+                    } else if (sottoModo === "FT8" || modoRilevato === "FT8" || commenti.includes("FT8")) {
                         modoRilevato = "FT8";
                     } else if (modoRilevato === "PHONE" || modoRilevato === "SSB" || commenti.includes("SSB") || commenti.includes("LSB") || commenti.includes("USB")) {
                         modoRilevato = "SSB";
                     } else if (modoRilevato === "CW" || commenti.includes("CW")) {
                         modoRilevato = "CW";
-                    }
-
-                    if(!modoRilevato || modoRilevato === "DATA" || modoRilevato === "DIGITAL") {
-                        modoRilevato = "DATA";
+                    } else {
+                        modoRilevato = "DATA"; // Fallback generico se non è nessuna delle precedenti
                     }
 
                     // Filtraggio Bande Matematico
-                    if(filtBand !== "all") {
-                        if(filtBand === "6m" && (rawFreq < 50.0 || rawFreq > 54.0)) return;
-                        if(filtBand === "10m" && (rawFreq < 28.0 || rawFreq > 29.7)) return;
-                        if(filtBand === "12m" && (rawFreq < 24.89 || rawFreq > 24.99)) return;
-                        if(filtBand === "15m" && (rawFreq < 21.0 || rawFreq > 21.45)) return;
-                        if(filtBand === "17m" && (rawFreq < 18.068 || rawFreq > 18.168)) return;
-                        if(filtBand === "20m" && (rawFreq < 14.0 || rawFreq > 14.35)) return;
-                        if(filtBand === "30m" && (rawFreq < 10.1 || rawFreq > 10.15)) return;
-                        if(filtBand === "40m" && (rawFreq < 7.0 || rawFreq > 7.3)) return;
-                        if(filtBand === "60m" && (rawFreq < 5.06 || rawFreq > 5.45)) return;
-                        if(filtBand === "80m" && (rawFreq < 3.5 || rawFreq > 3.8)) return;
-                        if(filtBand === "160m" && (rawFreq < 1.8 || rawFreq > 2.0)) return;
-                        if(filtBand === "2m" && (rawFreq < 144.0 || rawFreq > 148.0)) return;
-                    }
+                    if(filtBand !== "all" && filtBand !== bandaCorrente) return;
                     
+                    // Filtraggio per Modalità
                     if(filtMode !== "all") {
                         if(filtMode === "SSB" && modoRilevato !== "SSB") return;
                         if(filtMode !== "SSB" && modoRilevato !== filtMode) return;
@@ -295,16 +305,11 @@
 
                     const freqMhz = rawFreq.toFixed(3);
 
-                    let badgeClass = modoRilevato;
-                    if(badgeClass !== "FT8" && badgeClass !== "FT4" && badgeClass !== "CW" && badgeClass !== "SSB") {
-                        badgeClass = "DATA"; 
-                    }
-
                     const row = `<tr>
                         <td>${timeStr}</td>
                         <td><strong>${spot.activator}</strong></td>
                         <td>${freqMhz} MHz</td>
-                        <td><span class="badge-mode ${badgeClass}">${modoRilevato}</span></td>
+                        <td><span class="badge-mode ${modoRilevato}">${modoRilevato}</span></td>
                         <td>${spot.reference}</td>
                     </tr>`;
                     tableBody.innerHTML += row;
