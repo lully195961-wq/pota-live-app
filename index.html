@@ -19,7 +19,7 @@
         td { font-size: 13px; padding: 8px 4px !important; vertical-align: middle; }
         .badge-mode { font-weight: bold; padding: 3px 6px; border-radius: 4px; color: white; font-size: 11px; text-transform: uppercase; }
         
-        /* Colori dinamici per i Modi */
+        /* Colori Badge per i Modi */
         .FT8 { background-color: #e74c3c; } 
         .FT4 { background-color: #9b59b6; }
         .CW { background-color: #d35400; } 
@@ -31,7 +31,7 @@
         .form-label { margin-bottom: 0.2rem; font-size: 13px; font-weight: bold; }
         .form-control, .form-select { padding: 0.4rem 0.6rem; font-size: 13px; }
 
-        /* OTTIMIZZAZIONE MOBILE */
+        /* Ottimizzazione Layout per Schermi Mobile */
         @media (max-width: 768px) {
             body { padding: 5px; }
             .card, .table-container { padding: 8px !important; margin-bottom: 8px; }
@@ -48,17 +48,14 @@
         <div class="col-md-3">
             <div class="card">
                 <h3 class="text-center">Invia Auto-Spot</h3>
-                
                 <div class="mb-3">
                     <label class="form-label">Attivatore:</label>
                     <input type="text" id="activator" class="form-control" placeholder="es. K2L">
                 </div>
-                
                 <div class="mb-3">
                     <label class="form-label">Frequenza (kHz):</label>
                     <input type="number" id="frequency" class="form-control" placeholder="14074">
                 </div>
-                
                 <div class="mb-3">
                     <label class="form-label">Modo:</label>
                     <select id="mode" class="form-select">
@@ -68,22 +65,18 @@
                         <option value="SSB">SSB</option>
                     </select>
                 </div>
-                
                 <div class="mb-3">
                     <label class="form-label">Referenza POTA:</label>
                     <input type="text" id="reference" class="form-control" placeholder="es. US-2912">
                 </div>
-                
                 <div class="mb-3">
                     <label class="form-label">Spotter:</label>
                     <input type="text" id="spotter" class="form-control" value="IK6LMB" disabled>
                 </div>
-                
                 <div class="mb-3">
                     <label class="form-label">Commenti:</label>
                     <input type="text" id="comments" class="form-control" placeholder="es. FT8 o CW">
                 </div>
-                
                 <button id="btnInvia" class="btn btn-primary w-100" onclick="inviaSpot()">Invia Spot</button>
                 <div id="statusResult" class="text-center mt-2 font-weight-bold" style="font-size: 12px;"></div>
             </div>
@@ -145,7 +138,6 @@
     function inviaSpot() {
         const btn = document.getElementById('btnInvia');
         const resDiv = document.getElementById('statusResult');
-        
         const act = document.getElementById('activator').value.toUpperCase().trim();
         const freqVal = parseFloat(document.getElementById('frequency').value);
         const md = document.getElementById('mode').value;
@@ -159,32 +151,18 @@
 
         btn.disabled = true;
         resDiv.innerHTML = "<span class='text-warning'>Invio in corso...</span>";
-
         const freqMhz = freqVal > 1000 ? freqVal / 1000.0 : freqVal;
-
-        const payload = {
-            activator: act,
-            spotter: "IK6LMB",
-            frequency: freqMhz,
-            mode: md,
-            submode: "",
-            reference: ref,
-            comments: comm
-        };
 
         fetch('/api/spot', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ activator: act, spotter: "IK6LMB", frequency: freqMhz, mode: md, submode: "", reference: ref, comments: comm })
         })
         .then(response => {
             btn.disabled = false;
             if (response.status === 200 || response.status === 201) {
                 resDiv.innerHTML = "<span class='text-success'>✓ Spot Inviato!</span>";
-                setTimeout(() => { 
-                    loadSpots(); 
-                    resDiv.innerHTML = "";
-                }, 2000);
+                setTimeout(() => { loadSpots(); resDiv.innerHTML = ""; }, 2000);
             } else {
                 resDiv.innerHTML = `<span class='text-danger'>X Rifiutato: ${response.status}</span>`;
             }
@@ -219,8 +197,9 @@
         fetch('/api/spots')
             .then(res => res.json())
             .then(data => {
-                if(!Array.isArray(data)) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Errore nei dati ricevuti dal server</td></tr>`;
+                // Se il server passa un errore esplicito o non restituisce un array valido
+                if(!data || data.error || !Array.isArray(data)) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${data?.error || 'Risposta del server non valida'}</td></tr>`;
                     return;
                 }
                 
@@ -231,46 +210,99 @@
                 const visti = new Set();
 
                 data.forEach(spot => {
-                    let rawFreq = parseFloat(spot.frequency);
-                    if(isNaN(rawFreq)) return;
+                    try {
+                        if(!spot || !spot.activator || !spot.frequency) return;
 
-                    // Normalizzazione dinamica se l'API dovesse variare il formato (es. kHz anziché MHz)
-                    if (rawFreq > 100000) {
-                        rawFreq = rawFreq / 1000000.0;
-                    } else if (rawFreq > 1000) {
-                        rawFreq = rawFreq / 1000.0;
-                    }
+                        let rawFreq = parseFloat(spot.frequency);
+                        if(isNaN(rawFreq)) return;
 
-                    let bandaCorrente = getBandaString(rawFreq);
-                    let chiaveUnica = `${spot.activator.toUpperCase().trim()}_${bandaCorrente}`;
-                    
-                    if (visti.has(chiaveUnica)) return; 
-                    visti.add(chiaveUnica);
+                        // Correzione e normalizzazione delle unità di misura (kHz vs MHz)
+                        if (rawFreq > 100000) rawFreq /= 1000000.0;
+                        else if (rawFreq > 1000) rawFreq /= 1000.0;
 
-                    let modoRilevato = (spot.mode || "").toUpperCase().trim();
-                    let sottoModo = (spot.submode || "").toUpperCase().trim();
-                    let commenti = (spot.comments || "").toUpperCase();
-                    
-                    // Riconoscimento prioritario basato sulle stringhe esplicite
-                    if (sottoModo === "FT4" || modoRilevato === "FT4" || commenti.includes("FT4")) {
-                        modoRilevato = "FT4";
-                    } else if (sottoModo === "FT8" || modoRilevato === "FT8" || commenti.includes("FT8")) {
-                        modoRilevato = "FT8";
-                    } else if (modoRilevato === "PHONE" || modoRilevato === "SSB" || commenti.includes("SSB") || commenti.includes("LSB") || commenti.includes("USB")) {
-                        modoRilevato = "SSB";
-                    } else if (modoRilevato === "CW" || commenti.includes("CW")) {
-                        modoRilevato = "CW";
-                    } else if (modoRilevato === "DATA" || modoRilevato === "DIGITAL") {
-                        let f = rawFreq;
+                        let bandaCorrente = getBandaString(rawFreq);
+                        let chiaveUnica = `${spot.activator.toUpperCase().trim()}_${bandaCorrente}`;
                         
-                        // DISCRIMINAZIONE TOLERANT-MODE BASATA SULLE TUE TABELLE
-                        if (
-                            (bandaCorrente === "160m" && f >= 1.838 && f <= 1.842) ||
-                            (bandaCorrente === "80m"  && f >= 3.565 && f <= 3.570) ||
-                            (bandaCorrente === "60m"  && f >= 5.355 && f <= 5.359) ||
-                            (bandaCorrente === "40m"  && f >= 7.045 && f <= 7.050) || // Finestra FT4 7.0475
-                            (bandaCorrente === "30m"  && f >= 10.138 && f <= 10.142) ||
-                            (bandaCorrente === "20m"  && f >= 14.078 && f <= 14.083) || // Finestra FT4 14.080
-                            (bandaCorrente === "17m"  && f >= 18.102 && f <= 18.106) ||
-                            (bandaCorrente === "15m"  && f >= 21.138 && f <= 21.142) || // Finestra FT4 21.140
-                            (bandaCorrente
+                        if (visti.has(chiaveUnica)) return; 
+                        visti.add(chiaveUnica);
+
+                        let modoRilevato = (spot.mode || "").toUpperCase().trim();
+                        let sottoModo = (spot.submode || "").toUpperCase().trim();
+                        let commenti = (spot.comments || "").toUpperCase();
+                        
+                        // Riconoscimento basato sulle stringhe dei dati
+                        if (sottoModo === "FT4" || modoRilevato === "FT4" || commenti.includes("FT4")) modoRilevato = "FT4";
+                        else if (sottoModo === "FT8" || modoRilevato === "FT8" || commenti.includes("FT8")) modoRilevato = "FT8";
+                        else if (modoRilevato === "PHONE" || modoRilevato === "SSB" || commenti.includes("SSB") || commenti.includes("LSB") || commenti.includes("USB")) modoRilevato = "SSB";
+                        else if (modoRilevato === "CW" || commenti.includes("CW")) modoRilevato = "CW";
+                        else if (modoRilevato === "DATA" || modoRilevato === "DIGITAL") {
+                            let f = rawFreq;
+                            // Discriminazione fine basata sulle frequenze delle tabelle ufficiali
+                            if (
+                                (bandaCorrente === "160m" && f >= 1.838 && f <= 1.842) ||
+                                (bandaCorrente === "80m"  && f >= 3.565 && f <= 3.570) ||
+                                (bandaCorrente === "60m"  && f >= 5.355 && f <= 5.359) ||
+                                (bandaCorrente === "40m"  && f >= 7.045 && f <= 7.050) || 
+                                (bandaCorrente === "30m"  && f >= 10.138 && f <= 10.142) ||
+                                (bandaCorrente === "20m"  && f >= 14.078 && f <= 14.083) || 
+                                (bandaCorrente === "17m"  && f >= 18.102 && f <= 18.106) ||
+                                (bandaCorrente === "15m"  && f >= 21.138 && f <= 21.142) || 
+                                (bandaCorrente === "12m"  && f >= 24.917 && f <= 24.922) ||
+                                (bandaCorrente === "10m"  && f >= 28.178 && f <= 28.183)
+                            ) {
+                                modoRilevato = "FT4";
+                            } else {
+                                modoRilevato = "FT8"; // Fallback automatico su FT8 per le altre frequenze digitali
+                            }
+                        } else {
+                            modoRilevato = "SSB";
+                        }
+
+                        // Filtri UI della Pagina
+                        if(filtBand !== "all" && filtBand !== bandaCorrente) return;
+                        if(filtMode !== "all") {
+                            if(filtMode === "SSB" && modoRilevato !== "SSB") return;
+                            if(filtMode !== "SSB" && modoRilevato !== filtMode) return;
+                        }
+
+                        count++;
+                        if(count > 35) return;
+
+                        let timeStr = "Attivo";
+                        if(spot.spotTime) {
+                            const spotDate = new Date(spot.spotTime);
+                            const diffMs = nowUtcMs - spotDate.getTime();
+                            const diffMins = Math.floor(diffMs / 60000);
+                            const diffSecs = Math.floor(diffMs / 1000);
+
+                            if (diffMins < 1) timeStr = diffSecs <= 10 ? "Ora" : `${diffSecs}s fa`;
+                            else if (diffMins >= 60) {
+                                const diffHours = Math.floor(diffMins / 60);
+                                timeStr = `${diffHours}h`;
+                            } else timeStr = `${diffMins}m fa`;
+                        }
+
+                        tableBody.innerHTML += `<tr>
+                            <td>${timeStr}</td>
+                            <td><strong>${spot.activator}</strong></td>
+                            <td>${rawFreq.toFixed(3)} MHz</td>
+                            <td><span class="badge-mode ${modoRilevato}">${modoRilevato}</span></td>
+                            <td>${spot.reference || ''}</td>
+                        </tr>`;
+                    } catch(e) { console.error("Errore riga record:", e); }
+                });
+
+                if(count === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nessun attivatore trovato con i filtri attivi</td></tr>`;
+                }
+            })
+            .catch(err => {
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Errore di comunicazione con il server web</td></tr>`;
+            });
+    }
+
+    loadSpots();
+    setInterval(loadSpots, 30000);
+</script>
+</body>
+</html>
