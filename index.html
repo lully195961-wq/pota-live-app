@@ -31,16 +31,13 @@
         .form-label { margin-bottom: 0.2rem; font-size: 13px; font-weight: bold; }
         .form-control, .form-select { padding: 0.4rem 0.6rem; font-size: 13px; }
 
-        /* OTTIMIZZAZIONE COMPATTA PER SCHERMI CELLULARE */
+        /* OTTIMIZZAZIONE MOBILE */
         @media (max-width: 768px) {
             body { padding: 5px; }
             .card, .table-container { padding: 8px !important; margin-bottom: 8px; }
-            th { font-size: 10.5px; padding: 6px 3px !important; }
-            td { font-size: 10.5px; padding: 6px 3px !important; }
-            .badge-mode { font-size: 9.5px; padding: 2px 3px; }
-            h3 { font-size: 1.05rem; margin-bottom: 10px !important; }
-            .form-control, .form-select { padding: 0.35rem 0.5rem; font-size: 12px; }
-            .form-label { font-size: 12px; }
+            th, td { font-size: 11px; padding: 6px 3px !important; }
+            .badge-mode { font-size: 10px; padding: 2px 4px; }
+            h3 { font-size: 1.1rem; margin-bottom: 10px !important; }
         }
     </style>
 </head>
@@ -222,8 +219,8 @@
         fetch('/api/spots')
             .then(res => res.json())
             .then(data => {
-                if(data.error) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${data.error}</td></tr>`;
+                if(!Array.isArray(data)) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Errore nei dati ricevuti dal server</td></tr>`;
                     return;
                 }
                 
@@ -237,6 +234,7 @@
                     let rawFreq = parseFloat(spot.frequency);
                     if(isNaN(rawFreq)) return;
 
+                    // Normalizzazione dinamica se l'API dovesse variare il formato (es. kHz anziché MHz)
                     if (rawFreq > 100000) {
                         rawFreq = rawFreq / 1000000.0;
                     } else if (rawFreq > 1000) {
@@ -253,6 +251,7 @@
                     let sottoModo = (spot.submode || "").toUpperCase().trim();
                     let commenti = (spot.comments || "").toUpperCase();
                     
+                    // Riconoscimento prioritario basato sulle stringhe esplicite
                     if (sottoModo === "FT4" || modoRilevato === "FT4" || commenti.includes("FT4")) {
                         modoRilevato = "FT4";
                     } else if (sottoModo === "FT8" || modoRilevato === "FT8" || commenti.includes("FT8")) {
@@ -264,65 +263,14 @@
                     } else if (modoRilevato === "DATA" || modoRilevato === "DIGITAL") {
                         let f = rawFreq;
                         
-                        // Logica FT4 pulita senza conflitti
+                        // DISCRIMINAZIONE TOLERANT-MODE BASATA SULLE TUE TABELLE
                         if (
-                            (bandaCorrente === "160m" && f >= 1.839 && f <= 1.841) ||
-                            (bandaCorrente === "80m"  && f >= 3.567 && f <= 3.569) ||
-                            (bandaCorrente === "60m"  && f >= 5.356 && f <= 5.358) ||
-                            (bandaCorrente === "40m"  && f >= 7.046 && f <= 7.049) || 
-                            (bandaCorrente === "30m"  && f >= 10.139 && f <= 10.141) ||
-                            (bandaCorrente === "20m"  && f >= 14.079 && f <= 14.082) || 
-                            (bandaCorrente === "17m"  && f >= 18.103 && f <= 18.105) ||
-                            (bandaCorrente === "15m"  && f >= 21.139 && f <= 21.141) || 
-                            (bandaCorrente === "12m"  && f >= 24.918 && f <= 24.920) ||
-                            (bandaCorrente === "10m"  && f >= 28.179 && f <= 28.181)
-                        ) {
-                            modoRilevato = "FT4";
-                        } 
-                        // Logica FT8 pulita senza conflitti
-                        else if (
-                            (bandaCorrente === "160m" && f >= 1.839 && f <= 1.841) ||
-                            (bandaCorrente === "80m"  && f >= 3.572 && f <= 3.574) ||
-                            (bandaCorrente === "60m"  && f >= 5.356 && f <= 5.358) ||
-                            (bandaCorrente === "40m"  && f >= 7.072 && f <= 7.076) || 
-                            (bandaCorrente === "30m"  && f >= 10.135 && f <= 10.137) ||
-                            (bandaCorrente === "20m"  && f >= 14.072 && f <= 14.076) || 
-                            (bandaCorrente === "17m"  && f >= 18.099 && f <= 18.101) ||
-                            (bandaCorrente === "15m"  && f >= 21.072 && f <= 21.076) || 
-                            (bandaCorrente === "12m"  && f >= 24.914 && f <= 24.916) ||
-                            (bandaCorrente === "10m"  && f >= 28.072 && f <= 28.076) ||
-                            (bandaCorrente === "6m"   && f >= 50.312 && f <= 50.314) ||
-                            (bandaCorrente === "2m"   && f >= 144.173 && f <= 144.175)
-                        ) {
-                            modoRilevato = "FT8";
-                        } 
-                        else {
-                            let dec = f - Math.floor(f);
-                            modoRilevato = (dec > 0.076) ? "FT4" : "FT8";
-                        }
-                    } else {
-                        modoRilevato = "SSB";
-                    }
-
-                    if(filtBand !== "all" && filtBand !== bandaCorrente) return;
-                    
-                    if(filtMode !== "all") {
-                        if(filtMode === "SSB" && modoRilevato !== "SSB") return;
-                        if(filtMode !== "SSB" && modoRilevato !== filtMode) return;
-                    }
-
-                    count++;
-                    if(count > 35) return;
-
-                    let timeStr = "Attivo";
-                    if(spot.spotTime) {
-                        const spotDate = new Date(spot.spotTime);
-                        const diffMs = nowUtcMs - spotDate.getTime();
-                        const diffMins = Math.floor(diffMs / 60000);
-                        const diffSecs = Math.floor(diffMs / 1000);
-
-                        if (diffMins < 1) {
-                            timeStr = diffSecs <= 10 ? "Ora" : `${diffSecs}s fa`;
-                        } else if (diffMins >= 60) {
-                            const diffHours = Math.floor(diffMins / 60);
-                            const remMins = diffMins % 6
+                            (bandaCorrente === "160m" && f >= 1.838 && f <= 1.842) ||
+                            (bandaCorrente === "80m"  && f >= 3.565 && f <= 3.570) ||
+                            (bandaCorrente === "60m"  && f >= 5.355 && f <= 5.359) ||
+                            (bandaCorrente === "40m"  && f >= 7.045 && f <= 7.050) || // Finestra FT4 7.0475
+                            (bandaCorrente === "30m"  && f >= 10.138 && f <= 10.142) ||
+                            (bandaCorrente === "20m"  && f >= 14.078 && f <= 14.083) || // Finestra FT4 14.080
+                            (bandaCorrente === "17m"  && f >= 18.102 && f <= 18.106) ||
+                            (bandaCorrente === "15m"  && f >= 21.138 && f <= 21.142) || // Finestra FT4 21.140
+                            (bandaCorrente
