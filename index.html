@@ -197,7 +197,6 @@
         fetch('/api/spots')
             .then(res => res.json())
             .then(data => {
-                // Se il server passa un errore esplicito o non restituisce un array valido
                 if(!data || data.error || !Array.isArray(data)) {
                     tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${data?.error || 'Risposta del server non valida'}</td></tr>`;
                     return;
@@ -216,9 +215,18 @@
                         let rawFreq = parseFloat(spot.frequency);
                         if(isNaN(rawFreq)) return;
 
-                        // Correzione e normalizzazione delle unità di misura (kHz vs MHz)
-                        if (rawFreq > 100000) rawFreq /= 1000000.0;
-                        else if (rawFreq > 1000) rawFreq /= 1000.0;
+                        // Correzione e normalizzazione delle unità di misura (Hz vs kHz vs MHz)
+                        if (rawFreq > 1000000) {
+                            rawFreq /= 1000000.0;
+                        } else if (rawFreq > 1000) {
+                            if (rawFreq >= 144000 && rawFreq <= 148000) {
+                                rawFreq /= 1000.0;
+                            } else if (rawFreq > 100000) {
+                                rawFreq /= 1000000.0;
+                            } else {
+                                rawFreq /= 1000.0;
+                            }
+                        }
 
                         let bandaCorrente = getBandaString(rawFreq);
                         let chiaveUnica = `${spot.activator.toUpperCase().trim()}_${bandaCorrente}`;
@@ -230,14 +238,12 @@
                         let sottoModo = (spot.submode || "").toUpperCase().trim();
                         let commenti = (spot.comments || "").toUpperCase();
                         
-                        // Riconoscimento basato sulle stringhe dei dati
                         if (sottoModo === "FT4" || modoRilevato === "FT4" || commenti.includes("FT4")) modoRilevato = "FT4";
                         else if (sottoModo === "FT8" || modoRilevato === "FT8" || commenti.includes("FT8")) modoRilevato = "FT8";
                         else if (modoRilevato === "PHONE" || modoRilevato === "SSB" || commenti.includes("SSB") || commenti.includes("LSB") || commenti.includes("USB")) modoRilevato = "SSB";
                         else if (modoRilevato === "CW" || commenti.includes("CW")) modoRilevato = "CW";
                         else if (modoRilevato === "DATA" || modoRilevato === "DIGITAL") {
                             let f = rawFreq;
-                            // Discriminazione fine basata sulle frequenze delle tabelle ufficiali
                             if (
                                 (bandaCorrente === "160m" && f >= 1.838 && f <= 1.842) ||
                                 (bandaCorrente === "80m"  && f >= 3.565 && f <= 3.570) ||
@@ -252,13 +258,12 @@
                             ) {
                                 modoRilevato = "FT4";
                             } else {
-                                modoRilevato = "FT8"; // Fallback automatico su FT8 per le altre frequenze digitali
+                                modoRilevato = "FT8";
                             }
                         } else {
                             modoRilevato = "SSB";
                         }
 
-                        // Filtri UI della Pagina
                         if(filtBand !== "all" && filtBand !== bandaCorrente) return;
                         if(filtMode !== "all") {
                             if(filtMode === "SSB" && modoRilevato !== "SSB") return;
