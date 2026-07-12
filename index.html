@@ -215,18 +215,14 @@
                         let rawFreq = parseFloat(spot.frequency);
                         if(isNaN(rawFreq)) return;
 
-                        // Correzione e normalizzazione delle unità di misura (Hz vs kHz vs MHz)
+                        // NUOVA LOGICA DI NORMALIZZAZIONE INFALLIBILE
                         if (rawFreq > 1000000) {
+                            // Se ha più di 6 cifre intere, è sicuramente espresso in Hz (es. 14074000 o 144200000)
                             rawFreq /= 1000000.0;
-                        } else if (rawFreq > 1000) {
-                            if (rawFreq >= 144000 && rawFreq <= 148000) {
-                                rawFreq /= 1000.0;
-                            } else if (rawFreq > 100000) {
-                                rawFreq /= 1000000.0;
-                            } else {
-                                rawFreq /= 1000.0;
-                            }
-                        }
+                        } else if (rawFreq >= 1000) {
+                            // Se è compreso tra 1.000 e 1.000.000, è espresso in kHz (es. 14074 o 146000)
+                            rawFreq /= 1000.0;
+                        } // Se è inferiore a 1000, è già espresso in MHz (es. 14.074 o 146.125) e non fa nulla
 
                         let bandaCorrente = getBandaString(rawFreq);
                         let chiaveUnica = `${spot.activator.toUpperCase().trim()}_${bandaCorrente}`;
